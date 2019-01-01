@@ -37,10 +37,6 @@ typedef struct
 	int cnt;		//! number of stars in this cell.
 	float cx;		//! center of mass for cell, x component.
 	float cy;		//! center of mass for cell, y component.
-	float lx;		//! x pos of star with lowest x coord.
-	float hx;		//! x pos of star with highest x coord.
-	float ly;		//! y pos of star with lowest y coord.
-	float hy;		//! y pos of star with highest y coord.
 } cell_t;
 
 
@@ -69,7 +65,23 @@ const int grid_resolutions[ 1+NUMDIMS ] =
 	AGG3RES,	// 8x8 cell aggregate.
 };
 
+const int cell_sizes[ 1+NUMDIMS ] =
+{
+	1,	// level 0: individual stars.
+	1,	// level 1: cell aggregate.
+	2,	// level 2: 2x2
+	4,	// level 3: 4x4
+	8,	// level 4: 8x8
+};
 
+const int req_distances[ 1+NUMDIMS ] =
+{
+	0,
+	2,
+	2*2,
+	2*2*2,
+	2*2*2*2,
+};
 
 #define	CELL2POS( C )	( (float) ( C - (GRIDRES-1)/2.0f ) )
 
@@ -77,6 +89,8 @@ const int grid_resolutions[ 1+NUMDIMS ] =
 
 
 extern void stars_create( void );
+
+extern void stars_calculate_contribution_info( void );
 
 extern void stars_update( float dt );
 

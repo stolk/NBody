@@ -20,7 +20,6 @@
 
 static cell_t cells[ GRIDRES ][ GRIDRES ];
 
-
 static aggregate_t* aggregates[ 1+NUMDIMS ] = { 0,0,0,0,0 };
 
 
@@ -42,6 +41,27 @@ typedef struct
 	float x;
 	float y;
 } force_t;
+
+
+#define MAXCONTRIBS	500
+
+typedef struct
+{
+	int totalcount;
+	int mixedcoords[ MAXCONTRIBS ];
+
+	int counts[ NUMDIMS+1 ];
+	int sortedcoords[ MAXCONTRIBS ];
+} contribinfo_t;
+
+contribinfo_t contribs[ GRIDRES ][ GRIDRES ];
+
+
+static const float G = 0.0001f;
+
+#define ENCODECONTRIB( LEVEL, X, Y ) \
+	( ( X << 0 ) | ( Y << 8 ) | ( LEVEL << 16 ) )
+
 
 
 static float halton( int idx, int base )
@@ -180,6 +200,9 @@ void stars_create( void )
 	}
 	LOGI( "Allocated %d aggregation levels.", NUMDIMS );
 
+	stars_calculate_contribution_info();
+	LOGI( "Calculated contribution info." );
+
 	for ( int i=0; i<circle_sz; ++i )
 	{
 		const float a0 = M_PI * 2 / circle_sz * ( i+0 );
@@ -283,102 +306,14 @@ static void make_aggregates( void )
 }
 
 
-void cell_update_centre_of_mass( int cx, int cy )
+void enumerate_contributors( int level, int x, int y, int cx, int cy )
 {
-	cell_t& cell = cells[ cx ][ cy ];
-	const int cnt = cell.cnt;
-	if ( !cnt )
-	{
-		cell.cx = ( cell.xrng[0] + cell.xrng[1] ) / 2;
-		cell.cy = ( cell.yrng[0] + cell.yrng[1] ) / 2;
-		cell.lx = cell.hx = cell.cx;
-		cell.ly = cell.hy = cell.cy;
-		return;
-	}
-	cell.cx = 0;
-	cell.cy = 0;
-	cell.lx = cell.hx = cell.px[0];
-	cell.ly = cell.hy = cell.py[0];
-	for ( int i=0; i<cnt; ++i )
-	{
-		cell.cx += cell.px[i];
-		cell.cy += cell.py[i];
-		cell.lx = cell.px[i] < cell.lx ? cell.px[i] : cell.lx;
-		cell.hx = cell.px[i] > cell.hx ? cell.px[i] : cell.hx;
-		cell.ly = cell.py[i] < cell.ly ? cell.py[i] : cell.ly;
-		cell.hy = cell.py[i] > cell.hy ? cell.py[i] : cell.hy;
-	}
-	const float EPS = 10e-6;
-	ASSERTM( cell.lx >= cell.xrng[0]-EPS && cell.lx <= cell.xrng[1]+EPS, "lx %f xrng %f..%f", cell.lx, cell.xrng[0], cell.xrng[1] );
-	ASSERTM( cell.hx >= cell.xrng[0]-EPS && cell.hx <= cell.xrng[1]+EPS, "hx %f xrng %f..%f", cell.hx, cell.xrng[0], cell.xrng[1] );
-	ASSERTM( cell.ly >= cell.yrng[0]-EPS && cell.ly <= cell.yrng[1]+EPS, "ly %f yrng %f..%f", cell.ly, cell.yrng[0], cell.yrng[1] );
-	ASSERTM( cell.hy >= cell.yrng[0]-EPS && cell.hy <= cell.yrng[1]+EPS, "hy %f yrng %f..%f", cell.hy, cell.yrng[0], cell.yrng[1] );
-	cell.cx *= ( 1.0 / cell.cnt );
-	cell.cy *= ( 1.0 / cell.cnt );
-}
-
-static const float G = 0.0001f;
-
-force_t sum_forces_of_single_cell( int cx, int cy, float curx, float cury )
-{
-	const cell_t& cell = cells[ cx ][ cy ];
-	force_t force = { 0, 0 };
-	const int cnt = cell.cnt;
-	for ( int i=0; i<cnt; ++i )
-	{
-		const float dx = cell.px[ i ] - curx;
-		const float dy = cell.py[ i ] - cury;
-		const float dsqr = dx*dx + dy*dy;
-		if ( dsqr > 0.0f )
-		{
-			const float dist = sqrtf( dsqr );
-			//ASSERTM( dist > 0.0f, "dx %f dy %f dsqr %f dist %f", dx, dy, dsqr, dist );
-			//LOGI( "dx %f dy %f dsqr %f dist %f", dx, dy, dsqr, dist );
-			const float dirx = dx / dist;
-			const float diry = dy / dist;
-			float f = G * 1.0f / dsqr;
-			f = CLAMPED( f, 0, 1 );
-			force.x += dirx * f;
-			force.y += diry * f;
-		}
-	}
-	return force;
-}
-
-
-force_t sum_forces_recursively( int level, int x, int y, int cx, int cy, float curx, float cury )
-{
-	const int res = grid_resolutions[ level ];
-
-	const int cell_sizes[ 1+NUMDIMS ] =
-	{
-		1,	// level 0: individual stars.
-		1,	// level 1: cell aggregate.
-		2,	// level 2: 2x2
-		4,	// level 3: 4x4
-		8,	// level 4: 8x8
-	};
 	const int cell_size = cell_sizes[ level ];
 
-	const int req_distances[ 1+NUMDIMS ] =
-	{
-		0,
-		2,
-		2*2,
-		2*2*2,
-		2*2*2*2,
-	};
 	const int req_dist = req_distances[ level ];
 
 	const int xx = cell_size * x;
 	const int yy = cell_size * y;
-
-	if ( cx == 16 && cy == 16 )
-	{
-		float cpx = CELL2POS(xx) - 0.5f;
-		float cpy = CELL2POS(yy) - 0.5f;
-		debugdraw_rect( cpx, cpy, cpx + cell_size, cpy + cell_size );
-	}
 
 	const bool skip_refining =
 		xx >= cx + req_dist ||
@@ -386,61 +321,75 @@ force_t sum_forces_recursively( int level, int x, int y, int cx, int cy, float c
 		yy >= cy + req_dist ||
 		yy + cell_size - 1 <= cy - req_dist;
 
-//	LOGI( "level %d x,y %d,%d cx,cy %d,%d: cell_size %d, req dist %d, skip refining: %d", level, x,y, cx,cy, cell_size, req_dist, skip_refining );
-
+	contribinfo_t& contrib = contribs[ cx ][ cy ];
 	if ( skip_refining )
 	{
-		// we can use the aggregate.
-		const aggregate_t& ag = aggregates[ level ][ x * res + y ];
-		const float dx = ag.cx - curx;
-		const float dy = ag.cy - cury;
-		const float dsqr = dx*dx + dy*dy;
-		if ( ag.cnt && dsqr > 0 )
-		{
-			const float dist = sqrtf( dsqr );
-			const float dirx = dx / dist;
-			const float diry = dy / dist;
-			float f = G * 1.0f / dsqr;
-			f = CLAMPED( f, 0, 1 );
-			f *= ag.cnt;
-			force_t force = { dirx * f, diry * f };
-			if ( cx == 16 && cy == 16 )
-			{
-				float mx = CELL2POS(xx) - 0.5f + 0.5f * cell_size;
-				float my = CELL2POS(yy) - 0.5f + 0.5f * cell_size;
-				debugdraw_arrow( mx, my, mx + 10000*force.x, my + 10000*force.y );
-			}
-
-			return force;
-		}
-		else
-		{
-			force_t force = {0,0};
-			return force;
-		}
+		int& totalcount = contrib.totalcount;
+		contrib.mixedcoords[ totalcount++ ] = ENCODECONTRIB( level, x, y );
 	}
 	else
 	{
 		// Grid cells at level 2 and higher may require breaking up into four.
 		if ( level > 1 )
 		{
-			const force_t f0 = sum_forces_recursively( level-1, 2*x+0, 2*y+0, cx, cy, curx, cury );
-			const force_t f1 = sum_forces_recursively( level-1, 2*x+1, 2*y+0, cx, cy, curx, cury );
-			const force_t f2 = sum_forces_recursively( level-1, 2*x+1, 2*y+1, cx, cy, curx, cury );
-			const force_t f3 = sum_forces_recursively( level-1, 2*x+0, 2*y+1, cx, cy, curx, cury );
-			force_t force = { f0.x + f1.x + f2.x + f3.x, f0.y + f1.y + f2.y + f3.y };
-			return force;
+			enumerate_contributors( level-1, 2*x+0, 2*y+0, cx, cy );
+			enumerate_contributors( level-1, 2*x+1, 2*y+0, cx, cy );
+			enumerate_contributors( level-1, 2*x+1, 2*y+1, cx, cy );
+			enumerate_contributors( level-1, 2*x+0, 2*y+1, cx, cy );
 		}
 		else
 		{
 			// we are at single-cell level, we need to do the full solution, computing per-star.
-			const force_t force = sum_forces_of_single_cell( cx, cy, curx, cury );
-			return force;
+			int& totalcount = contrib.totalcount;
+			contrib.mixedcoords[ totalcount++ ] = ENCODECONTRIB( 0, x, y );
 		}
 	}
 }
 
 
+void stars_calculate_contribution_info( void )
+{
+	TT_SCOPE( "calc contribution" );
+	for ( int cx=0; cx<GRIDRES; ++cx )
+		for ( int cy=0; cy<GRIDRES; ++cy )
+		{
+			contribinfo_t& contrib = contribs[ cx ][ cy ];
+			const int toplvl = NUMDIMS;
+			const int topres = grid_resolutions[ toplvl ];
+			for ( int x=0; x<topres; ++x )
+				for ( int y=0; y<topres; ++y )
+					enumerate_contributors( toplvl, x, y, cx, cy );
+			//LOGI( "Total nr of contributions for cell %d,%d: %d", cx, cy, contrib.totalcount );
+			int numwritten = 0;
+			int sumcount = 0;
+			for ( int l=0; l<=NUMDIMS; ++l )
+			{
+				const int res = grid_resolutions[ l ];
+				int& count = contrib.counts[ l ];
+				for ( int i=0; i<contrib.totalcount; ++i )
+				{
+					const int code = contrib.mixedcoords[ i ];
+					const int x   = ( code >>  0 ) & 0xff;
+					const int y   = ( code >>  8 ) & 0xff;
+					const int lvl = ( code >> 16 ) & 0xff;
+					ASSERT( lvl >= 0 && lvl <= NUMDIMS );
+					if ( lvl == l )
+					{
+						ASSERTM( x >= 0 && x < res, "x,y %d,%d not in range 0..%d", x, y, res );
+						ASSERTM( y >= 0 && y < res, "x,y %d,%d not in range 0..%d", x, y, res );
+						contrib.sortedcoords[ numwritten++ ] = code;
+						count++;
+					}
+				}
+				sumcount += count;
+			}
+			ASSERT( numwritten == contrib.totalcount );
+			ASSERT( sumcount == contrib.totalcount );
+		}
+}
+
+
+#define MAXSOURCES	( MAXCONTRIBS + 15 * CELLCAP )
 void cell_update( int cx, int cy, float dt )
 {
 	TT_SCOPE( "cell_update" );
@@ -449,6 +398,57 @@ void cell_update( int cx, int cy, float dt )
 	if ( !cnt ) return;
 	float qx[ CELLCAP ];	// new x-coords.
 	float qy[ CELLCAP ];	// new y-coords.
+
+	float src_x  [ MAXSOURCES ];
+	float src_y  [ MAXSOURCES ];
+	float src_scl[ MAXSOURCES ];
+
+	TT_BEGIN( "gather contribs" );
+	// Find all the sources that generate gravity for this cell (individual stars, and aggregates.)
+	const contribinfo_t& contrib = contribs[ cx ][ cy ];
+	int reader = 0;
+	int numsrc = 0;
+	// level 0: individual stars
+	const int count0 = contrib.counts[0];
+	for ( int i=0; i<count0; ++i )
+	{
+		const int code = contrib.sortedcoords[ reader++ ];
+		const int x = ( code >> 0 ) & 0xff;
+		const int y = ( code >> 8 ) & 0xff;
+		const cell_t& other = cells[ x ][ y ];
+		for ( int j=0; j<other.cnt; ++j )
+		{
+			src_x  [ numsrc ] = other.px[ j ];
+			src_y  [ numsrc ] = other.py[ j ];
+			src_scl[ numsrc ] = 1;
+			numsrc++;
+		}
+	}
+	// level [1..NUMDIMS] (inclusive) are aggregates.
+	for ( int level=1; level<=NUMDIMS; ++level )
+	{
+		const int countn = contrib.counts[ level ];
+		const int res = grid_resolutions[ level ];
+		for ( int i=0; i<countn; ++i )
+		{
+			const int code = contrib.sortedcoords[ reader++ ];
+			const int x = ( code >> 0 ) & 0xff;
+			const int y = ( code >> 8 ) & 0xff;
+			aggregate_t& ag = aggregates[ level ][ x * res + y ];
+			src_x  [ numsrc ] = ag.cx;
+			src_y  [ numsrc ] = ag.cy;
+			src_scl[ numsrc ] = ag.cnt;
+			if ( ag.cnt )
+				numsrc++;
+			ASSERT( numsrc <= MAXSOURCES );
+		}
+	}
+	//LOGI( "For cx,cy %d,%d: numsrc: %d", cx, cy, numsrc );
+	TT_END( "gather contribs" );
+
+	// Traverse the stars in this cell, and sum all forces on it.
+
+	TT_BEGIN( "Compute forces" );
 	for ( int i=0; i<cnt; ++i )
 	{
 		float ax = 0.0f;
@@ -457,17 +457,24 @@ void cell_update( int cx, int cy, float dt )
 		const float curx = cell.px[i];
 		const float cury = cell.py[i];
 
-		// Sum all forces from top level grid.
-		const int res = grid_resolutions[ NUMDIMS ];
-		for ( int xx=0; xx<res; ++xx )
-			for ( int yy=0; yy<res; ++yy )
+		for ( int s=0; s<numsrc; ++s )
+		{
+			const float dx =  src_x[s] - curx;
+			const float dy =  src_y[s] - cury;
+			const float scl = src_scl[s];
+			if ( scl <= 0.0f ) continue;
+			const float dsqr = dx*dx + dy*dy;
+			if ( dsqr > 0 )
 			{
-				force_t force = sum_forces_recursively( NUMDIMS, xx, yy, cx, cy, curx, cury );
-				ax += force.x;
-				ay += force.y;
+				const float dist = sqrtf( dsqr );
+				const float dirx = dx / dist;
+				const float diry = dy / dist;
+				float f = G * 1.0f / dsqr;
+				f = CLAMPED( f, 0, 1 );
+				ax += dirx * f * src_scl[s];
+				ay += diry * f * src_scl[s];
 			}
-
-		//if ( i==0 ) LOGI( "cx,cy %d,%d star0 has ax,ay %f,%f", cx, cy, ax, ay );
+		}
 
 		// apply forces to change velocity.
 		cell.vx[i] += ax * dt;
@@ -481,6 +488,7 @@ void cell_update( int cx, int cy, float dt )
 		if ( qy[i] < cell.yrng[0] ) ST_SET_CROSSED_LO_Y( cell.st[i] );
 		if ( qy[i] > cell.yrng[1] ) ST_SET_CROSSED_HI_Y( cell.st[i] );
 	}
+	TT_END( "Compute forces" );
 	memcpy( cell.px, qx, cnt*sizeof(float) );
 	memcpy( cell.py, qy, cnt*sizeof(float) );
 }
@@ -489,11 +497,6 @@ void cell_update( int cx, int cy, float dt )
 void stars_update( float dt )
 {
 	make_aggregates();
-
-	// Calculate centre of mass for each cell.
-	for ( int cx=0; cx<GRIDRES; ++cx )
-		for ( int cy=0; cy<GRIDRES; ++cy )
-			cell_update_centre_of_mass( cx, cy );
 
 	// Update position and velocity of stars in cells.
 	for ( int cx=0; cx<GRIDRES; ++cx )
