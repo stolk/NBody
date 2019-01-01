@@ -1,0 +1,186 @@
+CXX=clang++
+CC=clang
+PERF=$(HOME)/src/pmu-tools/ocperf.py
+
+
+AR=ar
+PERF=$(HOME)/src/pmu-tools/ocperf.py
+
+BASEPREFIX=$(HOME)/apps/GBase/src
+PIPREFIX=PI
+DBLUNTPREFIX=$(HOME)/src/dutch-blunt/src
+TTPREFIX=$(HOME)/src/ThreadTracer
+
+#OPTIM=-DDEBUG
+OPTIM=-O2 -mavx2
+#-fsanitize=float-divide-by-zero
+
+CFLAGS=\
+  -DXWIN -DLANDSCAPE -DUSECOREPROFILE -Dlinux \
+  -D_POSIX_C_SOURCE=199309L \
+  -D_DEFAULT_SOURCE \
+  -DAPPVER=1.00 \
+  -DLOGTAG=minimal \
+  -I$(HOME)/src/stb/ \
+  -I$(HOME)/include \
+  -I$(STEAMPREFIX)/public \
+  -I$(DBLUNTPREFIX) \
+  -I$(BASEPREFIX) \
+  -I$(PIPREFIX) \
+  -I$(TTPREFIX) \
+  `$(HOME)/bin/sdl2-config --cflags` \
+  -g -Wall -Wshadow -Wno-conversion -Wno-missing-braces -Wno-old-style-cast -Wno-unknown-pragmas \
+  -MMD -MP \
+  $(OPTIM)
+
+#LDFLAGS += -fsanitize=address
+#LDFLAGS += -fsanitize=float-divide-by-zero
+
+#CFLAGS += -O0 -fno-omit-frame-pointer
+#CFLAGS += -O0 -fsanitize=address -fno-omit-frame-pointer
+
+
+CXXFLAGS:=$(CFLAGS) -std=c++11
+
+CFLAGS += \
+  -std=c99
+
+BASEOBJS=\
+  $(BASEPREFIX)/logx.o \
+  $(BASEPREFIX)/elapsed.o \
+  $(BASEPREFIX)/dbd.o \
+  $(BASEPREFIX)/kv.o \
+  $(BASEPREFIX)/nfy.o \
+  $(BASEPREFIX)/assertreport.o \
+  $(BASEPREFIX)/pidc.o \
+  $(BASEPREFIX)/glpr.o \
+  $(BASEPREFIX)/quad.o \
+  $(BASEPREFIX)/txdb_stb.o \
+  $(BASEPREFIX)/pseudorand.o \
+  $(BASEPREFIX)/wavdb.o \
+  $(BASEPREFIX)/sticksignal.o \
+
+PIOBJS=\
+  $(PIPREFIX)/keymap.o \
+  $(PIPREFIX)/view.o \
+  $(PIPREFIX)/text.o \
+  $(PIPREFIX)/ctrl.o \
+  $(PIPREFIX)/ctrl_draw.o \
+  $(PIPREFIX)/stars.o \
+  $(PIPREFIX)/cam.o \
+  $(PIPREFIX)/debugdraw.o \
+
+
+DBLUNTOBJS=\
+  $(DBLUNTPREFIX)/dblunt.o
+
+#  -lsteam_api \
+	
+LIBS=\
+  -L. \
+  -L$(HOME)/lib \
+  $(HOME)/lib/libSDL2.a \
+  /usr/lib/x86_64-linux-gnu/libalut.a \
+  -lopenal \
+  -lpthread \
+  -lGL \
+  -ldl \
+  -lm
+
+DISTDIR=minimal-1.00
+
+SOUNDS=\
+  Sounds/break00 Sounds/break01 Sounds/break02 Sounds/break03 Sounds/break04 Sounds/break05 Sounds/break06 Sounds/break07 Sounds/break08 Sounds/break09 Sounds/engine Sounds/expl Sounds/gun00 Sounds/gun01 Sounds/gun02 Sounds/gun03 Sounds/missile00 Sounds/missile01 Sounds/reload
+
+ARTGAME=\
+  Art/Game/alarm.png Art/Game/ammobounce.png Art/Game/ammoregular.png Art/Game/ammoseeking.png Art/Game/ammotriple.png Art/Game/bulletbounce.png Art/Game/bulletregular.png Art/Game/bulletseeking.png Art/Game/cloud.png Art/Game/contrail.png Art/Game/dust.png Art/Game/explosion.png Art/Game/feature.png Art/Game/finishflag.png Art/Game/flash.png Art/Game/gplaysin.png Art/Game/gplaysout.png Art/Game/health0.png Art/Game/health1.png Art/Game/health2.png Art/Game/health3.png Art/Game/healthkit.png Art/Game/hudammobounce.png Art/Game/hudammoregular.png Art/Game/hudammoseeking.png Art/Game/hudammotriple.png Art/Game/joypanel.png Art/Game/joyradial.png Art/Game/joystick.png Art/Game/leverhandle.png Art/Game/leverpanel.png Art/Game/locator.png Art/Game/modelsblu.png Art/Game/modelwblu.png Art/Game/pause.png Art/Game/reticule.png Art/Game/satelite.png Art/Game/shop.png Art/Game/tankbodblk.png Art/Game/tankbodblu.png Art/Game/tankbodred.png Art/Game/tankbrldbl.png Art/Game/tankbrlsin.png Art/Game/tanktrk.png Art/Game/tanktudblk.png Art/Game/tanktudred.png Art/Game/tankturblk.png Art/Game/tankturblu.png Art/Game/tankturred.png
+
+
+VBOS=\
+  VBOs/buggywheel_f.vbo \
+  VBOs/buggychassis_f.vbo \
+  VBOs/dozerbucket_f.vbo \
+  VBOs/dozerarm_f.vbo \
+  VBOs/groundplane_f.vbo \
+  VBOs/dpistontop_f.vbo \
+  VBOs/dpistonbtm_f.vbo \
+  VBOs/pistontop_f.vbo \
+  VBOs/pistonbtm_f.vbo \
+  VBOs/spindle_f.vbo \
+  VBOs/lowercontrolarm_f.vbo \
+  VBOs/uppercontrolarm_f.vbo \
+  VBOs/coilspring_f.vbo \
+  VBOs/turret_f.vbo \
+  VBOs/bullet_f.vbo \
+  VBOs/doublebarrel_f.vbo \
+
+
+
+#  -lopenal \
+	#
+#
+
+all: minimal
+
+
+
+run: minimal
+	./minimal
+
+
+minimal:libbase.a libdblunt.a libpi.a XWin/main.o $(TTPREFIX)/threadtracer.o
+	$(CXX) $(LDFLAGS) -ominimal XWin/main.o $(TTPREFIX)/threadtracer.o -lpi -ldblunt -lbase $(LIBS)
+
+
+libbase.a:$(BASEOBJS)
+	$(AR) rcsv $*.a $(BASEOBJS)
+
+libpi.a:$(PIOBJS)
+	$(AR) rcsv $*.a $(PIOBJS)
+
+libdblunt.a: $(DBLUNTOBJS)
+	$(AR) rcsv $*.a $(DBLUNTOBJS)
+
+
+clean:
+	rm -f minimal
+	rm -f *.a
+	rm -f $(BASEOBJS)
+	rm -f $(DBLUNTOBJS)
+	rm -f $(PIOBJS)
+	rm -f XWin/main.o
+
+graph.svg: minimal
+	rm -f perf.data perf.data.old
+	$(PERF) record -e cpu-cycles:pp --call-graph=dwarf ./minimal fs=0 vsync=0
+	$(PERF) script | $(HOME)/src/FlameGraph/stackcollapse-perf.pl > out.perf-folded
+	$(HOME)/src/FlameGraph/flamegraph.pl out.perf-folded > graph.svg
+	-firefox graph.svg
+
+runningprofile:
+	export ARMORPID=`pgrep minimal`
+	echo $(ARMORPID)
+
+dist:
+	rm -rf $(DISTDIR)
+	mkdir $(DISTDIR)
+	mkdir $(DISTDIR)/Sounds
+	mkdir $(DISTDIR)/Art
+	mkdir $(DISTDIR)/Art/Game
+	mkdir $(DISTDIR)/VBOs
+	mkdir $(DISTDIR)/Worlds
+	cp $(SOUNDS) $(DISTDIR)/Sounds/
+	cp $(ARTGAME) $(DISTDIR)/Art/Game/
+	cp VBOs/* $(DISTDIR)/VBOs/
+	cp Worlds/* $(DISTDIR)/Worlds/
+	cp minimal $(DISTDIR)/minmal
+	tar cvzf ftt-linux-1.13.tar.gz $(DISTDIR)
+
+
+
+-include $(BASEOBJS:.o=.d)
+-include $(PIOBJS:.o=.d)
+-include $(DBLUNTOBJS:.o=.d)
+-include XWin/main.d
+
+

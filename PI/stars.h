@@ -1,0 +1,86 @@
+#define NUMSTARS	10000	//! Total number of stars.
+#define	GRIDRES		64	//! Grid resolution.
+#define CELLCAP		600	//! Max stars per cell.
+
+#define ST_CROSSED_LO_X		(1<<0)
+#define ST_CROSSED_HI_X		(1<<1)
+#define ST_CROSSED_LO_Y		(1<<2)
+#define ST_CROSSED_HI_Y		(1<<3)
+
+#define ST_IS_SET( ST, B ) \
+	( ( ST & B ) != 0 )
+
+#define ST_IS_CROSSED_LO_X( ST )	ST_IS_SET( ST, ST_CROSSED_LO_X )
+#define ST_IS_CROSSED_HI_X( ST )	ST_IS_SET( ST, ST_CROSSED_HI_X )
+#define ST_IS_CROSSED_LO_Y( ST )	ST_IS_SET( ST, ST_CROSSED_LO_Y )
+#define ST_IS_CROSSED_HI_Y( ST )	ST_IS_SET( ST, ST_CROSSED_HI_Y )
+
+#define ST_SET_CROSSED_LO_X( ST )	ST |= ST_CROSSED_LO_X
+#define ST_SET_CROSSED_HI_X( ST )	ST |= ST_CROSSED_HI_X
+#define ST_SET_CROSSED_LO_Y( ST )	ST |= ST_CROSSED_LO_Y
+#define ST_SET_CROSSED_HI_Y( ST )	ST |= ST_CROSSED_HI_Y
+
+#define ST_CLR_CROSSED_LO_X( ST )	ST &= ~ST_CROSSED_LO_X
+#define ST_CLR_CROSSED_HI_X( ST )	ST &= ~ST_CROSSED_HI_X
+#define ST_CLR_CROSSED_LO_Y( ST )	ST &= ~ST_CROSSED_LO_Y
+#define ST_CLR_CROSSED_HI_Y( ST )	ST &= ~ST_CROSSED_HI_Y
+
+typedef struct
+{
+	float px[ CELLCAP ];	//! x coordinates of all the stars in this cell.
+	float py[ CELLCAP ];	//! y coordinates of all the stars in this cell.
+	float vx[ CELLCAP ];	//! velocities, x component.
+	float vy[ CELLCAP ];	//! velocities, y component.
+	int   st[ CELLCAP ];	//! status bits for each star.
+	float xrng[2];		//! cell's low and high x.
+	float yrng[2];		//! cell's low and high y;
+	int cnt;		//! number of stars in this cell.
+	float cx;		//! center of mass for cell, x component.
+	float cy;		//! center of mass for cell, y component.
+	float lx;		//! x pos of star with lowest x coord.
+	float hx;		//! x pos of star with highest x coord.
+	float ly;		//! y pos of star with lowest y coord.
+	float hy;		//! y pos of star with highest y coord.
+} cell_t;
+
+
+typedef struct
+{
+	int cnt;
+	float cx;
+	float cy;
+	float rngx[2];
+	float rngy[2];
+} aggregate_t;
+
+#define NUMDIMS 4
+
+#define AGG0RES	GRIDRES
+#define AGG1RES (AGG0RES/2)
+#define AGG2RES (AGG1RES/2)
+#define AGG3RES (AGG2RES/2)
+
+const int grid_resolutions[ 1+NUMDIMS ] =
+{
+	GRIDRES,	// cell level: individual stars.
+	AGG0RES,	// 1 cell aggregate.
+	AGG1RES,	// 2x2 cell aggregate.
+	AGG2RES,	// 4x4 cell aggregate.
+	AGG3RES,	// 8x8 cell aggregate.
+};
+
+
+
+#define	CELL2POS( C )	( (float) ( C - (GRIDRES-1)/2.0f ) )
+
+#define POS2CELL( P )	( (int) floorf( P + GRIDRES/2 ) )
+
+
+extern void stars_create( void );
+
+extern void stars_update( float dt );
+
+extern void stars_draw_grid( void );
+
+extern void stars_draw_field( void );
+
