@@ -16,6 +16,18 @@
 #include "threadtracer.h"
 
 #include <float.h>
+#include <immintrin.h>
+
+#define VECTORIZE	1
+
+#if defined( MSWIN )
+#       define ALIGNEDPRE __declspec(align(32))
+#       define ALIGNEDPST
+#else
+#       define ALIGNEDPRE
+#       define ALIGNEDPST __attribute__ ((aligned (32)))
+#endif
+
 
 
 static cell_t cells[ GRIDRES ][ GRIDRES ];
@@ -57,7 +69,7 @@ typedef struct
 contribinfo_t contribs[ GRIDRES ][ GRIDRES ];
 
 
-static const float G = 0.0001f;
+static const float G = 0.0002f;
 
 #define ENCODECONTRIB( LEVEL, X, Y ) \
 	( ( X << 0 ) | ( Y << 8 ) | ( LEVEL << 16 ) )
@@ -166,7 +178,7 @@ void stars_create( void )
 			idx++;
 			dsqr = px*px + py*py;
 		} while ( dsqr >= 1.0f );
-#if 1
+#if 0
 		const float vx = 0.0f;
 		const float vy = 0.0f;
 #else
@@ -389,7 +401,7 @@ void stars_calculate_contribution_info( void )
 }
 
 
-#define MAXSOURCES	( MAXCONTRIBS + 15 * CELLCAP )
+#define MAXSOURCES	( MAXCONTRIBS + 8 * CELLCAP )
 void cell_update( int cx, int cy, float dt )
 {
 	TT_SCOPE( "cell_update" );
@@ -399,9 +411,9 @@ void cell_update( int cx, int cy, float dt )
 	float qx[ CELLCAP ];	// new x-coords.
 	float qy[ CELLCAP ];	// new y-coords.
 
-	float src_x  [ MAXSOURCES ];
-	float src_y  [ MAXSOURCES ];
-	float src_scl[ MAXSOURCES ];
+	ALIGNEDPRE float src_x  [ MAXSOURCES ] ALIGNEDPST;
+	ALIGNEDPRE float src_y  [ MAXSOURCES ] ALIGNEDPST;
+	ALIGNEDPRE float src_scl[ MAXSOURCES ] ALIGNEDPST;
 
 	TT_BEGIN( "gather contribs" );
 	// Find all the sources that generate gravity for this cell (individual stars, and aggregates.)
@@ -444,11 +456,18 @@ void cell_update( int cx, int cy, float dt )
 		}
 	}
 	//LOGI( "For cx,cy %d,%d: numsrc: %d", cx, cy, numsrc );
+#if VECTORIZE
+	// Make it an even nr of batches.
+	while ( numsrc & 0xf )
+		src_scl[ numsrc++ ] = 0;
+	const int numbatches = numsrc/8;
+#endif
 	TT_END( "gather contribs" );
 
 	// Traverse the stars in this cell, and sum all forces on it.
 
 	TT_BEGIN( "Compute forces" );
+
 	for ( int i=0; i<cnt; ++i )
 	{
 		float ax = 0.0f;
@@ -457,6 +476,47 @@ void cell_update( int cx, int cy, float dt )
 		const float curx = cell.px[i];
 		const float cury = cell.py[i];
 
+		const __m256 curx8 = _mm256_set1_ps( curx );
+		const __m256 cury8 = _mm256_set1_ps( cury );
+		const __m256 G8    = _mm256_set1_ps( G );
+
+#if VECTORIZE
+		__m256 forcex8 = _mm256_setzero_ps();
+		__m256 forcey8 = _mm256_setzero_ps();
+		for ( int batch=0; batch<numbatches; ++batch )
+		{
+			const __m256 x8   = _mm256_load_ps( src_x + 8*batch );
+			const __m256 y8   = _mm256_load_ps( src_y + 8*batch );
+			const __m256 scl8 = _mm256_load_ps( src_scl + 8*batch );
+			const __m256 dx8  = _mm256_sub_ps ( x8, curx8 );
+			const __m256 dy8  = _mm256_sub_ps ( y8, cury8 );
+			const __m256 dsqr8 =
+				_mm256_add_ps
+				(
+				 	_mm256_mul_ps( dx8, dx8 ),
+					_mm256_mul_ps( dy8, dy8 )
+				);
+			__m256 idist8  = _mm256_rsqrt_ps( dsqr8 );
+			idist8 = _mm256_min_ps( idist8, _mm256_set1_ps( 100.0 ) );
+			__m256 denom8 = _mm256_mul_ps( _mm256_mul_ps( idist8, idist8 ), idist8 );
+			__m256 numer8 = _mm256_mul_ps( scl8, G8 );
+			__m256 magn8  = _mm256_mul_ps( numer8, denom8 );
+			__m256 addx8  = _mm256_mul_ps( magn8, dx8 );
+			__m256 addy8  = _mm256_mul_ps( magn8, dy8 );
+			forcex8 = _mm256_add_ps( forcex8, addx8 );
+			forcey8 = _mm256_add_ps( forcey8, addy8 );
+		}
+		__m256 sumx8 = _mm256_hadd_ps( forcex8, forcex8 );
+		__m256 sumy8 = _mm256_hadd_ps( forcey8, forcey8 );
+		sumx8 = _mm256_hadd_ps( sumx8, sumx8 );
+		sumy8 = _mm256_hadd_ps( sumy8, sumy8 );
+		const __m128 lox8 = _mm256_extractf128_ps( sumx8, 0x00 );
+		const __m128 hix8 = _mm256_extractf128_ps( sumx8, 0xff );
+		const __m128 loy8 = _mm256_extractf128_ps( sumy8, 0x00 );
+		const __m128 hiy8 = _mm256_extractf128_ps( sumy8, 0xff );
+		ax += _mm_cvtss_f32( _mm_add_ps( lox8, hix8 ) );
+		ay += _mm_cvtss_f32( _mm_add_ps( loy8, hiy8 ) );
+#else
 		for ( int s=0; s<numsrc; ++s )
 		{
 			const float dx =  src_x[s] - curx;
@@ -466,15 +526,14 @@ void cell_update( int cx, int cy, float dt )
 			const float dsqr = dx*dx + dy*dy;
 			if ( dsqr > 0 )
 			{
-				const float dist = sqrtf( dsqr );
-				const float dirx = dx / dist;
-				const float diry = dy / dist;
-				float f = G * 1.0f / dsqr;
-				f = CLAMPED( f, 0, 1 );
-				ax += dirx * f * src_scl[s];
-				ay += diry * f * src_scl[s];
+				float dist = sqrtf( dsqr );
+				dist = dist < 1e-2 ? 1e-2 : dist;
+				const float magn = ( src_scl[s] * G ) / ( dist*dist*dist );
+				ax += magn * dx;
+				ay += magn * dy;
 			}
 		}
+#endif
 
 		// apply forces to change velocity.
 		cell.vx[i] += ax * dt;
@@ -489,6 +548,7 @@ void cell_update( int cx, int cy, float dt )
 		if ( qy[i] > cell.yrng[1] ) ST_SET_CROSSED_HI_Y( cell.st[i] );
 	}
 	TT_END( "Compute forces" );
+
 	memcpy( cell.px, qx, cnt*sizeof(float) );
 	memcpy( cell.py, qy, cnt*sizeof(float) );
 }

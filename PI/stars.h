@@ -1,6 +1,6 @@
-#define NUMSTARS	10000	//! Total number of stars.
+#define NUMSTARS	15000	//! Total number of stars.
 #define	GRIDRES		64	//! Grid resolution.
-#define CELLCAP		600	//! Max stars per cell.
+#define CELLCAP		1200	//! Max stars per cell.
 
 #define ST_CROSSED_LO_X		(1<<0)
 #define ST_CROSSED_HI_X		(1<<1)
@@ -49,12 +49,13 @@ typedef struct
 	float rngy[2];
 } aggregate_t;
 
-#define NUMDIMS 4
+#define NUMDIMS 5
 
 #define AGG0RES	GRIDRES
 #define AGG1RES (AGG0RES/2)
 #define AGG2RES (AGG1RES/2)
 #define AGG3RES (AGG2RES/2)
+#define AGG4RES (AGG3RES/2)
 
 const int grid_resolutions[ 1+NUMDIMS ] =
 {
@@ -63,6 +64,7 @@ const int grid_resolutions[ 1+NUMDIMS ] =
 	AGG1RES,	// 2x2 cell aggregate.
 	AGG2RES,	// 4x4 cell aggregate.
 	AGG3RES,	// 8x8 cell aggregate.
+	AGG4RES,	// 16x16 cell aggregate.
 };
 
 const int cell_sizes[ 1+NUMDIMS ] =
@@ -72,6 +74,7 @@ const int cell_sizes[ 1+NUMDIMS ] =
 	2,	// level 2: 2x2
 	4,	// level 3: 4x4
 	8,	// level 4: 8x8
+	16,	// level 5: 16x16
 };
 
 const int req_distances[ 1+NUMDIMS ] =
@@ -81,6 +84,7 @@ const int req_distances[ 1+NUMDIMS ] =
 	2*2,
 	2*2*2,
 	2*2*2*2,
+	2*2*2*2*2,
 };
 
 #define	CELL2POS( C )	( (float) ( C - (GRIDRES-1)/2.0f ) )

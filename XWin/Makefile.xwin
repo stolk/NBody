@@ -12,7 +12,7 @@ DBLUNTPREFIX=$(HOME)/src/dutch-blunt/src
 TTPREFIX=$(HOME)/src/ThreadTracer
 
 #OPTIM=-DDEBUG
-OPTIM=-O2 -mavx2
+OPTIM=-O3 -mavx2
 #-fsanitize=float-divide-by-zero
 
 CFLAGS=\
