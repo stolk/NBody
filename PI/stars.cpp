@@ -147,6 +147,34 @@ int add_star( float px, float py, float vx, float vy )
 }
 
 
+void stars_spawn( int num, float centrex, float centrey, float vx, float vy, float radius )
+{
+	static int idx=0;
+
+	for ( int i=0; i<num; ++i )
+	{
+		float dsqr = 0.0f;
+		float px,py;
+		do
+		{
+			px = -1 + 2 * halton( idx, 2 );
+			py = -1 + 2 * halton( idx, 3 );
+			idx++;
+			dsqr = px*px + py*py;
+		} while ( dsqr >= 1.0f );
+#if 0
+		float vx = -1 + 2 * halton( idx, 5 );
+		float vy = -1 + 2 * halton( idx, 7 );
+		float l = sqrtf( vx*vx + vy*vy );
+		vx = 0.04f * vx * (1/l);
+		vy = 0.04f * vy * (1/l);
+#endif
+		//const float scl = GRIDRES/2.4f;
+		add_star( centrex + radius*px, centrey + radius*py, vx, vy );
+	}
+}
+
+
 void stars_create( void )
 {
 	for ( int cx=0; cx<GRIDRES; ++cx )
@@ -166,31 +194,11 @@ void stars_create( void )
 		LOGI( "px 0.0 falls in cx %d", POS2CELL(0.0f) );
 	}
 
-	int idx=0;
-	for ( int i=0; i<NUMSTARS; ++i )
-	{
-		float dsqr = 0.0f;
-		float px,py;
-		do
-		{
-			px = -1 + 2 * halton( idx, 2 );
-			py = -1 + 2 * halton( idx, 3 );
-			idx++;
-			dsqr = px*px + py*py;
-		} while ( dsqr >= 1.0f );
-#if 0
-		const float vx = 0.0f;
-		const float vy = 0.0f;
-#else
-		float vx = -1 + 2 * halton( idx, 5 );
-		float vy = -1 + 2 * halton( idx, 7 );
-		float l = sqrtf( vx*vx + vy*vy );
-		vx = 0.04f * vx * (1/l);
-		vy = 0.04f * vy * (1/l);
-#endif
-		const float scl = GRIDRES/2.4f;
-		add_star( scl*px, scl*py, vx, vy );
-	}
+	const int num = NUMSTARS/2;
+	const float off = GRIDRES/4.8f;
+	const float rad = GRIDRES/5.0f;
+	stars_spawn( num, -off/2, -off,  0.05f,  0.4f, rad );
+	stars_spawn( num,  off/2,  off, -0.05f, -0.4f, rad );
 
 	float maxcnt=0;
 	for ( int cx=0; cx<GRIDRES; ++cx )
@@ -510,12 +518,12 @@ void cell_update( int cx, int cy, float dt )
 		__m256 sumy8 = _mm256_hadd_ps( forcey8, forcey8 );
 		sumx8 = _mm256_hadd_ps( sumx8, sumx8 );
 		sumy8 = _mm256_hadd_ps( sumy8, sumy8 );
-		const __m128 lox8 = _mm256_extractf128_ps( sumx8, 0x00 );
-		const __m128 hix8 = _mm256_extractf128_ps( sumx8, 0xff );
-		const __m128 loy8 = _mm256_extractf128_ps( sumy8, 0x00 );
-		const __m128 hiy8 = _mm256_extractf128_ps( sumy8, 0xff );
-		ax += _mm_cvtss_f32( _mm_add_ps( lox8, hix8 ) );	// finally use the scalar float for x.
-		ay += _mm_cvtss_f32( _mm_add_ps( loy8, hiy8 ) );	// finally use the scalar float for y.
+		const __m128 lox4 = _mm256_extractf128_ps( sumx8, 0x00 );
+		const __m128 hix4 = _mm256_extractf128_ps( sumx8, 0xff );
+		const __m128 loy4 = _mm256_extractf128_ps( sumy8, 0x00 );
+		const __m128 hiy4 = _mm256_extractf128_ps( sumy8, 0xff );
+		ax += _mm_cvtss_f32( _mm_add_ps( lox4, hix4 ) );	// finally use the scalar float for x.
+		ay += _mm_cvtss_f32( _mm_add_ps( loy4, hiy4 ) );	// finally use the scalar float for y.
 #else
 		for ( int s=0; s<numsrc; ++s )
 		{
