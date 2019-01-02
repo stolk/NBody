@@ -481,7 +481,7 @@ void cell_update( int cx, int cy, float dt )
 		const __m256 G8    = _mm256_set1_ps( G );
 
 #if VECTORIZE
-		__m256 forcex8 = _mm256_setzero_ps();
+		__m256 forcex8 = _mm256_setzero_ps();	// all batches accumulate in these.
 		__m256 forcey8 = _mm256_setzero_ps();
 		for ( int batch=0; batch<numbatches; ++batch )
 		{
@@ -490,12 +490,11 @@ void cell_update( int cx, int cy, float dt )
 			const __m256 scl8 = _mm256_load_ps( src_scl + 8*batch );
 			const __m256 dx8  = _mm256_sub_ps ( x8, curx8 );
 			const __m256 dy8  = _mm256_sub_ps ( y8, cury8 );
-			const __m256 dsqr8 =
-				_mm256_add_ps
-				(
-				 	_mm256_mul_ps( dx8, dx8 ),
-					_mm256_mul_ps( dy8, dy8 )
-				);
+			const __m256 dsqr8 = _mm256_add_ps
+			(
+			 	_mm256_mul_ps( dx8, dx8 ),
+				_mm256_mul_ps( dy8, dy8 )
+			);
 			__m256 idist8  = _mm256_rsqrt_ps( dsqr8 );
 			idist8 = _mm256_min_ps( idist8, _mm256_set1_ps( 100.0 ) );
 			__m256 denom8 = _mm256_mul_ps( _mm256_mul_ps( idist8, idist8 ), idist8 );
@@ -506,6 +505,7 @@ void cell_update( int cx, int cy, float dt )
 			forcex8 = _mm256_add_ps( forcex8, addx8 );
 			forcey8 = _mm256_add_ps( forcey8, addy8 );
 		}
+		// Now we need to sum all 8 lanes in the force vector.
 		__m256 sumx8 = _mm256_hadd_ps( forcex8, forcex8 );
 		__m256 sumy8 = _mm256_hadd_ps( forcey8, forcey8 );
 		sumx8 = _mm256_hadd_ps( sumx8, sumx8 );
@@ -514,24 +514,20 @@ void cell_update( int cx, int cy, float dt )
 		const __m128 hix8 = _mm256_extractf128_ps( sumx8, 0xff );
 		const __m128 loy8 = _mm256_extractf128_ps( sumy8, 0x00 );
 		const __m128 hiy8 = _mm256_extractf128_ps( sumy8, 0xff );
-		ax += _mm_cvtss_f32( _mm_add_ps( lox8, hix8 ) );
-		ay += _mm_cvtss_f32( _mm_add_ps( loy8, hiy8 ) );
+		ax += _mm_cvtss_f32( _mm_add_ps( lox8, hix8 ) );	// finally use the scalar float for x.
+		ay += _mm_cvtss_f32( _mm_add_ps( loy8, hiy8 ) );	// finally use the scalar float for y.
 #else
 		for ( int s=0; s<numsrc; ++s )
 		{
 			const float dx =  src_x[s] - curx;
 			const float dy =  src_y[s] - cury;
 			const float scl = src_scl[s];
-			if ( scl <= 0.0f ) continue;
 			const float dsqr = dx*dx + dy*dy;
-			if ( dsqr > 0 )
-			{
-				float dist = sqrtf( dsqr );
-				dist = dist < 1e-2 ? 1e-2 : dist;
-				const float magn = ( src_scl[s] * G ) / ( dist*dist*dist );
-				ax += magn * dx;
-				ay += magn * dy;
-			}
+			float dist = sqrtf( dsqr );
+			dist = dist < 1e-2 ? 1e-2 : dist;
+			const float magn = ( src_scl[s] * G ) / ( dist*dist*dist );
+			ax += magn * dx;
+			ay += magn * dy;
 		}
 #endif
 
