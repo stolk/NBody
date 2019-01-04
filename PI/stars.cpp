@@ -90,6 +90,7 @@ void stars_init( void )
 #if NUMCONCURRENTTASKS
 	starsthreadpool = threadpool_create( NUMCONCURRENTTASKS );
 #endif
+	LOGI( "sizeof(cells) = %d", (int) sizeof(cells) );
 }
 
 
@@ -127,6 +128,8 @@ void remove_from_cell( int idx, int cx, int cy )
 	{
 		cell.px[idx] = cell.px[last];
 		cell.py[idx] = cell.py[last];
+		cell.qx[idx] = cell.qx[last];
+		cell.qy[idx] = cell.qy[last];
 		cell.vx[idx] = cell.vx[last];
 		cell.vy[idx] = cell.vy[last];
 		cell.st[idx] = cell.st[last];
@@ -451,8 +454,6 @@ void cell_update( int cx, int cy, float dt )
 	cell_t& cell = cells[ cx ][ cy ];
 	const int cnt = cell.cnt;
 	if ( !cnt ) return;
-	float qx[ CELLCAP ];	// new x-coords.
-	float qy[ CELLCAP ];	// new y-coords.
 
 	ALIGNEDPRE float src_x  [ MAXSOURCES ] ALIGNEDPST;
 	ALIGNEDPRE float src_y  [ MAXSOURCES ] ALIGNEDPST;
@@ -586,18 +587,15 @@ void cell_update( int cx, int cy, float dt )
 		cell.vx[i] += ax * dt;
 		cell.vy[i] += ay * dt;
 		// apply velocity to change position.
-		qx[i] = cell.px[i] + cell.vx[i] * dt;
-		qy[i] = cell.py[i] + cell.vy[i] * dt;
+		cell.qx[i] = cell.px[i] + cell.vx[i] * dt;
+		cell.qy[i] = cell.py[i] + cell.vy[i] * dt;
 		// see if we transitioned into another cell.
-		if ( qx[i] < cell.xrng[0] ) ST_SET_CROSSED_LO_X( cell.st[i] );
-		if ( qx[i] > cell.xrng[1] ) ST_SET_CROSSED_HI_X( cell.st[i] );
-		if ( qy[i] < cell.yrng[0] ) ST_SET_CROSSED_LO_Y( cell.st[i] );
-		if ( qy[i] > cell.yrng[1] ) ST_SET_CROSSED_HI_Y( cell.st[i] );
+		if ( cell.qx[i] < cell.xrng[0] ) ST_SET_CROSSED_LO_X( cell.st[i] );
+		if ( cell.qx[i] > cell.xrng[1] ) ST_SET_CROSSED_HI_X( cell.st[i] );
+		if ( cell.qy[i] < cell.yrng[0] ) ST_SET_CROSSED_LO_Y( cell.st[i] );
+		if ( cell.qy[i] > cell.yrng[1] ) ST_SET_CROSSED_HI_Y( cell.st[i] );
 	}
 	TT_END( "Compute forces" );
-
-	memcpy( cell.px, qx, cnt*sizeof(float) );
-	memcpy( cell.py, qy, cnt*sizeof(float) );
 }
 
 
@@ -635,6 +633,22 @@ void stars_update( float dt )
 				cell_update( cx, cy, dt );
 	}
 
+	TT_BEGIN( "p/q swap" );
+	for ( int cx=0; cx<GRIDRES; ++cx )
+		for ( int cy=0; cy<GRIDRES; ++cy )
+		{
+			cell_t& cell = cells[ cx ][ cy ];
+			const int cnt = cell.cnt;
+			if ( cnt )
+			{
+				memcpy( cell.px, cell.qx, cnt*sizeof(float) );
+				memcpy( cell.py, cell.qy, cnt*sizeof(float) );
+			}
+		}
+	TT_END( "p/q swap" );
+
+	TT_BEGIN( "transits" );
+
 	const int MAXTRANSITS = NUMSTARS/20;
 	float px[ MAXTRANSITS ];
 	float py[ MAXTRANSITS ];
@@ -647,7 +661,7 @@ void stars_update( float dt )
 		for ( int cy=0; cy<GRIDRES; ++cy )
 		{
 			cell_t& cell = cells[ cx ][ cy ];
-			int cnt = cell.cnt;
+			const int cnt = cell.cnt;
 			for ( int i=cnt-1; i>=0; --i )
 			{	
 				if ( ( cell.st[i] & 0xf ) != 0 )
@@ -669,6 +683,7 @@ void stars_update( float dt )
 	{
 		add_star( px[i], py[i], vx[i], vy[i] );
 	}
+	TT_END( "transits" );
 
 	debugdraw_crosshairs( 0, 0, 3 );
 }

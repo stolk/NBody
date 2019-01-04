@@ -29,6 +29,8 @@ typedef struct
 {
 	float px[ CELLCAP ];	//! x coordinates of all the stars in this cell.
 	float py[ CELLCAP ];	//! y coordinates of all the stars in this cell.
+	float qx[ CELLCAP ];	//! new x coordinates of all the stars in this cell.
+	float qy[ CELLCAP ];	//! new y coordinates of all the stars in this cell.
 	float vx[ CELLCAP ];	//! velocities, x component.
 	float vy[ CELLCAP ];	//! velocities, y component.
 	int   st[ CELLCAP ];	//! status bits for each star.
