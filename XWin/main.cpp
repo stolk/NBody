@@ -329,7 +329,7 @@ static void handle_mousemotion(SDL_MouseMotionEvent mmev)
 		float scl = ( 1.0f + dy );
 		scl = scl < 0.1f ? 0.1f : scl;
 		scl = scl > 4.0f ? 4.0f : scl;
-		snprintf( msg, sizeof( msg ), "cameraControl distScale=%f", scl );
+		snprintf( msg, sizeof( msg ), "camera trackscale=%f", scl );
 		nfy_msg( msg );
 	}
 	if ( rmb_down && view_enabled[ VIEWMAIN ] )

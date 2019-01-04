@@ -12,13 +12,28 @@
 #include "cam.h"
 #include "debugdraw.h"
 
+extern "C"
+{
+#if defined( ANDROID )
+#	include "threadpool.h"		// TODO
+#else
+#	include "sdlthreadpool.h"
+#endif
+}
 
 #include "threadtracer.h"
 
 #include <float.h>
 #include <immintrin.h>
 
-#define VECTORIZE	1
+#define MAXCONTRIBS		500
+
+#define VECTORIZE		1
+
+#define NUMCONCURRENTTASKS	4
+
+#define ENCODECONTRIB( LEVEL, X, Y ) \
+	( ( X << 0 ) | ( Y << 8 ) | ( LEVEL << 16 ) )
 
 #if defined( MSWIN )
 #       define ALIGNEDPRE __declspec(align(32))
@@ -29,6 +44,7 @@
 #endif
 
 
+static const float G = 0.0002f;
 
 static cell_t cells[ GRIDRES ][ GRIDRES ];
 
@@ -44,8 +60,7 @@ typedef struct
 	float displacements[ NUMSTARS ][ 2 ];
 } vdata_t;
 
-static vdata_t vdata;
-
+static vdata_t vdata;	//!< Vertex data for the VBO.
 
 //! Convenience struct, so we can return two floats from a function that sums forces.
 typedef struct
@@ -54,8 +69,6 @@ typedef struct
 	float y;
 } force_t;
 
-
-#define MAXCONTRIBS	500
 
 typedef struct
 {
@@ -66,14 +79,27 @@ typedef struct
 	int sortedcoords[ MAXCONTRIBS ];
 } contribinfo_t;
 
-contribinfo_t contribs[ GRIDRES ][ GRIDRES ];
+static contribinfo_t contribs[ GRIDRES ][ GRIDRES ];
+
+static threadpool_t* starsthreadpool = 0;
 
 
-static const float G = 0.0002f;
+//! Called once per lifetime of the application.
+void stars_init( void )
+{
+#if NUMCONCURRENTTASKS
+	starsthreadpool = threadpool_create( NUMCONCURRENTTASKS );
+#endif
+}
 
-#define ENCODECONTRIB( LEVEL, X, Y ) \
-	( ( X << 0 ) | ( Y << 8 ) | ( LEVEL << 16 ) )
 
+//! Called when application closes.
+void stars_exit( void )
+{
+	if ( starsthreadpool )
+		threadpool_free( starsthreadpool );
+	starsthreadpool = 0;
+}
 
 
 static float halton( int idx, int base )
@@ -147,7 +173,7 @@ int add_star( float px, float py, float vx, float vy )
 }
 
 
-void stars_spawn( int num, float centrex, float centrey, float vx, float vy, float radius )
+void stars_spawn( int num, float centrex, float centrey, float velx, float vely, float radius )
 {
 	static int idx=0;
 
@@ -162,6 +188,11 @@ void stars_spawn( int num, float centrex, float centrey, float vx, float vy, flo
 			idx++;
 			dsqr = px*px + py*py;
 		} while ( dsqr >= 1.0f );
+
+		const float dist = sqrtf( dsqr );
+		const float speedscale = 0.9f * ( 1.0f - 0.9f * dist );
+		const float vx = velx - py * speedscale;
+		const float vy = vely + px * speedscale;
 #if 0
 		float vx = -1 + 2 * halton( idx, 5 );
 		float vy = -1 + 2 * halton( idx, 7 );
@@ -194,11 +225,15 @@ void stars_create( void )
 		LOGI( "px 0.0 falls in cx %d", POS2CELL(0.0f) );
 	}
 
+#if 0
 	const int num = NUMSTARS/2;
-	const float off = GRIDRES/4.8f;
-	const float rad = GRIDRES/5.0f;
-	stars_spawn( num, -off/2, -off,  0.05f,  0.4f, rad );
-	stars_spawn( num,  off/2,  off, -0.05f, -0.4f, rad );
+	const float off = GRIDRES/6.2f;
+	const float rad = GRIDRES/6.0f;
+	stars_spawn( num, -off, -off/4,  0.01f,  0.14f, rad );
+	stars_spawn( num,  off,  off/4, -0.01f, -0.14f, rad );
+#else
+	stars_spawn( NUMSTARS, 0,0,  0,0,  GRIDRES/2.3 );
+#endif
 
 	float maxcnt=0;
 	for ( int cx=0; cx<GRIDRES; ++cx )
@@ -463,7 +498,15 @@ void cell_update( int cx, int cy, float dt )
 			ASSERT( numsrc <= MAXSOURCES );
 		}
 	}
-	//LOGI( "For cx,cy %d,%d: numsrc: %d", cx, cy, numsrc );
+
+#if 0
+	// add a black hole.
+	src_x  [ numsrc ] = 0.0f;
+	src_y  [ numsrc ] = 0.0f;
+	src_scl[ numsrc ] = 20000.0f;
+	numsrc++;
+#endif
+
 #if VECTORIZE
 	// Make it an even nr of batches.
 	while ( numsrc & 0xf )
@@ -558,14 +601,39 @@ void cell_update( int cx, int cy, float dt )
 }
 
 
+static float stars_dt = 0.0f;
+static void stars_update_slice( argument_t* arg )
+{
+	TT_SCOPE( "slice" );
+	const int cx = (int) (long) arg->arg;
+	for ( int cy=0; cy<GRIDRES; ++cy )
+		cell_update( cx, cy, stars_dt );
+}
+
+
 void stars_update( float dt )
 {
+	stars_dt = dt;
 	make_aggregates();
 
 	// Update position and velocity of stars in cells.
-	for ( int cx=0; cx<GRIDRES; ++cx )
-		for ( int cy=0; cy<GRIDRES; ++cy )
-			cell_update( cx, cy, dt );
+	if ( starsthreadpool )
+	{
+		// Parallel version.
+		for ( int cx=0; cx<GRIDRES; ++cx )
+		{
+			argument_t arg = { (void*)(long) cx, NO_DELETE, 0 };
+			threadpool_add( starsthreadpool, stars_update_slice, arg, MEDIUM );
+		}
+		threadpool_wait( starsthreadpool );
+	}
+	else
+	{
+		// Sequential version.
+		for ( int cx=0; cx<GRIDRES; ++cx )
+			for ( int cy=0; cy<GRIDRES; ++cy )
+				cell_update( cx, cy, dt );
+	}
 
 	const int MAXTRANSITS = NUMSTARS/20;
 	float px[ MAXTRANSITS ];
@@ -601,6 +669,8 @@ void stars_update( float dt )
 	{
 		add_star( px[i], py[i], vx[i], vy[i] );
 	}
+
+	debugdraw_crosshairs( 0, 0, 3 );
 }
 
 

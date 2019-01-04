@@ -230,11 +230,12 @@ static void ctrl_init( void )
 	sticksignal_init();
 	cam_init();
 	debugdraw_init();
+	CHECK_OGL
 	//wld_init();
 
-	CHECK_OGL
-
 	tt_signin( -1, "mainthread" );
+
+	stars_init();
 
 	virgin = false;
 }
@@ -324,7 +325,7 @@ void ctrl_destroy( void )
 
 void ctrl_exit( void )
 {
-	//wld_exit();
+	stars_exit();
 	tt_report( "threadtracer.json" );
 }
 

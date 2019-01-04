@@ -20,7 +20,7 @@ CFLAGS=\
   -D_POSIX_C_SOURCE=199309L \
   -D_DEFAULT_SOURCE \
   -DAPPVER=1.00 \
-  -DLOGTAG=minimal \
+  -DLOGTAG=nbody \
   -I$(HOME)/src/stb/ \
   -I$(HOME)/include \
   -I$(STEAMPREFIX)/public \
@@ -69,6 +69,8 @@ PIOBJS=\
   $(PIPREFIX)/stars.o \
   $(PIPREFIX)/cam.o \
   $(PIPREFIX)/debugdraw.o \
+  $(PIPREFIX)/sdlthreadpooltask.o \
+  $(PIPREFIX)/sdlthreadpool.o \
 
 
 DBLUNTOBJS=\
@@ -87,7 +89,7 @@ LIBS=\
   -ldl \
   -lm
 
-DISTDIR=minimal-1.00
+DISTDIR=nbody-1.00
 
 SOUNDS=\
   Sounds/break00 Sounds/break01 Sounds/break02 Sounds/break03 Sounds/break04 Sounds/break05 Sounds/break06 Sounds/break07 Sounds/break08 Sounds/break09 Sounds/engine Sounds/expl Sounds/gun00 Sounds/gun01 Sounds/gun02 Sounds/gun03 Sounds/missile00 Sounds/missile01 Sounds/reload
@@ -120,16 +122,16 @@ VBOS=\
 	#
 #
 
-all: minimal
+all: nbody
 
 
 
-run: minimal
-	./minimal
+run: nbody
+	./nbody
 
 
-minimal:libbase.a libdblunt.a libpi.a XWin/main.o $(TTPREFIX)/threadtracer.o
-	$(CXX) $(LDFLAGS) -ominimal XWin/main.o $(TTPREFIX)/threadtracer.o -lpi -ldblunt -lbase $(LIBS)
+nbody:libbase.a libdblunt.a libpi.a XWin/main.o $(TTPREFIX)/threadtracer.o
+	$(CXX) $(LDFLAGS) -onbody XWin/main.o $(TTPREFIX)/threadtracer.o -lpi -ldblunt -lbase $(LIBS)
 
 
 libbase.a:$(BASEOBJS)
@@ -143,22 +145,22 @@ libdblunt.a: $(DBLUNTOBJS)
 
 
 clean:
-	rm -f minimal
+	rm -f nbody
 	rm -f *.a
 	rm -f $(BASEOBJS)
 	rm -f $(DBLUNTOBJS)
 	rm -f $(PIOBJS)
 	rm -f XWin/main.o
 
-graph.svg: minimal
+graph.svg: nbody
 	rm -f perf.data perf.data.old
-	$(PERF) record -e cpu-cycles:pp --call-graph=dwarf ./minimal fs=0 vsync=0
+	$(PERF) record -e cpu-cycles:pp --call-graph=dwarf ./nbody fs=0 vsync=0
 	$(PERF) script | $(HOME)/src/FlameGraph/stackcollapse-perf.pl > out.perf-folded
 	$(HOME)/src/FlameGraph/flamegraph.pl out.perf-folded > graph.svg
 	-firefox graph.svg
 
 runningprofile:
-	export ARMORPID=`pgrep minimal`
+	export ARMORPID=`pgrep nbody`
 	echo $(ARMORPID)
 
 dist:
@@ -173,7 +175,7 @@ dist:
 	cp $(ARTGAME) $(DISTDIR)/Art/Game/
 	cp VBOs/* $(DISTDIR)/VBOs/
 	cp Worlds/* $(DISTDIR)/Worlds/
-	cp minimal $(DISTDIR)/minmal
+	cp nbody $(DISTDIR)/nbody
 	tar cvzf ftt-linux-1.13.tar.gz $(DISTDIR)
 
 

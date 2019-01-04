@@ -1,6 +1,6 @@
-#define NUMSTARS	15000	//! Total number of stars.
+#define NUMSTARS	30000	//! Total number of stars.
 #define	GRIDRES		64	//! Grid resolution.
-#define CELLCAP		1200	//! Max stars per cell.
+#define CELLCAP		2000	//! Max stars per cell.
 
 #define ST_CROSSED_LO_X		(1<<0)
 #define ST_CROSSED_HI_X		(1<<1)
@@ -91,6 +91,10 @@ const int req_distances[ 1+NUMDIMS ] =
 
 #define POS2CELL( P )	( (int) floorf( P + GRIDRES/2 ) )
 
+
+extern void stars_init( void );
+
+extern void stars_exit( void );
 
 extern void stars_create( void );
 
