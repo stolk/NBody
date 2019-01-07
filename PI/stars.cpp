@@ -176,7 +176,7 @@ int add_star( float px, float py, float vx, float vy )
 }
 
 
-void stars_spawn( int num, float centrex, float centrey, float velx, float vely, float radius )
+void stars_spawn( int num, float centrex, float centrey, float velx, float vely, float radius, bool addrot )
 {
 	static int idx=0;
 
@@ -193,16 +193,10 @@ void stars_spawn( int num, float centrex, float centrey, float velx, float vely,
 		} while ( dsqr >= 1.0f );
 
 		const float dist = sqrtf( dsqr );
-		const float speedscale = 0.9f * ( 1.0f - 0.9f * dist );
+		const float speedscale = addrot ? 0.9f * ( 1.0f - 0.9f * dist ) : 0;
 		const float vx = velx - py * speedscale;
 		const float vy = vely + px * speedscale;
-#if 0
-		float vx = -1 + 2 * halton( idx, 5 );
-		float vy = -1 + 2 * halton( idx, 7 );
-		float l = sqrtf( vx*vx + vy*vy );
-		vx = 0.04f * vx * (1/l);
-		vy = 0.04f * vy * (1/l);
-#endif
+
 		//const float scl = GRIDRES/2.4f;
 		add_star( centrex + radius*px, centrey + radius*py, vx, vy );
 	}
@@ -229,12 +223,13 @@ void stars_create( void )
 	}
 
 #if 0
-	const int num = NUMSTARS/2;
-	const float off = GRIDRES/6.2f;
-	const float rad = GRIDRES/6.0f;
-	stars_spawn( num, -off, -off/4,  0.01f,  0.14f, rad );
-	stars_spawn( num,  off,  off/4, -0.01f, -0.14f, rad );
-#else
+	const int num = NUMSTARS/5;
+	const float off = GRIDRES/5.0f;
+	const float rad = GRIDRES/9.0f;
+	stars_spawn( num, -off, -off/4,  0.01f,  0.14f, rad, true );
+	stars_spawn( num,  off,  off/4, -0.01f, -0.14f, rad, true );
+#endif
+#if 0
 	stars_spawn( NUMSTARS, 0,0,  0,0,  GRIDRES/2.3 );
 #endif
 
@@ -274,6 +269,27 @@ void stars_create( void )
 		*writer++ = x0; *writer++ = y0;
 		*writer++ = x1; *writer++ = y1;
 	}
+}
+
+
+void stars_sprinkle( int cnt, float x, float y, float rad )
+{
+	const float vx = 0;
+	const float vy = 0;
+	stars_spawn( cnt, x, y, vx, vy, rad, false );
+}
+
+
+int stars_total_count( void )
+{
+	int rv = 0;
+	for ( int x=0; x<GRIDRES; ++x )
+		for ( int y=0; y<GRIDRES; ++y )
+		{
+			const cell_t& cell = cells[ x ][ y ];
+			rv += cell.cnt;
+		}
+	return rv;
 }
 
 
@@ -424,6 +440,7 @@ void stars_calculate_contribution_info( void )
 			{
 				const int res = grid_resolutions[ l ];
 				int& count = contrib.counts[ l ];
+				ASSERT( count < MAXCONTRIBS );
 				for ( int i=0; i<contrib.totalcount; ++i )
 				{
 					const int code = contrib.mixedcoords[ i ];

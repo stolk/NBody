@@ -102,6 +102,10 @@ extern void stars_create( void );
 
 extern void stars_calculate_contribution_info( void );
 
+extern void stars_sprinkle( int cnt, float x, float y, float rad );
+
+extern int  stars_total_count( void );
+
 extern void stars_update( float dt );
 
 extern void stars_draw_grid( void );

@@ -176,8 +176,8 @@ int view_touchDown( int pointerCount, int pointerIdx, int* pointerIds, float* po
 			touches[ v ].moved = 0;
 			x -= rects[ v ].x;
 			y -= rects[ v ].y;
-			//const float rx = x / rects[ v ].w;
-			//const float ry = y / rects[ v ].h;
+			const float rx = x / rects[ v ].w;
+			const float ry = y / rects[ v ].h;
 			switch( v )
 			{
 				case VIEWPAUS:
@@ -287,7 +287,7 @@ void view_mouseMove( float dx, float dy )
 }
 
 
-void view_touchMove( int pointerCount, int pointerIdx, int* pointerIds, float* pointerX, float* pointerY, bool mb_down )
+void view_touchMove( int pointerCount, int pointerIdx, int* pointerIds, float* pointerX, float* pointerY, int mb_down )
 {
 	for ( int i=0; i<pointerCount; ++i )
 	{
@@ -330,6 +330,18 @@ void view_touchMove( int pointerCount, int pointerIdx, int* pointerIds, float* p
 				}
 			}
 
+		if ( mb_down & 4 && view_enabled[ VIEWMAIN ] )
+		{
+			x -= rects[ VIEWMAIN ].x;
+			y -= rects[ VIEWMAIN ].y;
+			const float rx = -1 + 2 * x / rects[ VIEWMAIN ].w;
+			const float ry = -1 + 2 * y / rects[ VIEWMAIN ].h;
+			char m[80];
+			snprintf( m, sizeof(m), "sprinkle start=0 x=%f y=%f", rx, ry );
+			nfy_msg( m );
+			continue;
+		}
+
 		int v = viewForPointerId( pointerId );
 		if ( v != -1 )
 		{
@@ -345,6 +357,10 @@ void view_touchMove( int pointerCount, int pointerIdx, int* pointerIds, float* p
 			switch( v )
 			{
 				case VIEWMAIN:
+					if ( pointerId == 2 )
+					{
+						break;
+					}
 					snprintf
 					(
 						msg, sizeof(msg),

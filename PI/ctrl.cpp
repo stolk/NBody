@@ -165,6 +165,19 @@ static void onAspect( const char* m )
 }
 
 
+static void onSprinkle( const char* m )
+{
+	const float x = nfy_flt( m, "x" );
+	const float y = nfy_flt( m, "y" );
+	const int start = nfy_flt( m, "start" );
+	const float px = cam_pos[0] + x / cam_scl / invaspect;
+	const float py = cam_pos[1] + y / cam_scl;
+	const int cnt = 12;
+	const float rad = 0.02 / cam_scl;
+	stars_sprinkle( cnt, px, py, rad );
+}
+
+
 //! Done once per lifetime of process.
 static void ctrl_init( void )
 {
@@ -191,6 +204,7 @@ static void ctrl_init( void )
 	nfy_obs_add( "settings", onSettings );
 	nfy_obs_add( "keymapdlg", onKeymapdlg );
 	nfy_obs_add( "aspect", onAspect );
+	nfy_obs_add( "sprinkle", onSprinkle );
 
 	kv_init( ctrl_configPath );
 

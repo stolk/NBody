@@ -294,8 +294,9 @@ const char* ctrl_drawFrame( void )
 	glUniform4f( font_colourUniform, 0.6f, 0.3f, 0.02f, 1.0f );
 	glDisable( GL_DEPTH_TEST );
 	text_draw_string( str, vec3_t(1,-1,0), vec3_t(0.023, 0.04, 0.0 ), "right", "bottom", -1 );
+	snprintf( str, sizeof(str), "%d", stars_total_count() );
+	text_draw_string( str, vec3_t(-1,-1,0), vec3_t(0.024, 0.04, 0.0 ), "left", "bottom", -1 );
 	CHECK_OGL
-
 	return 0;
 }
 

@@ -306,7 +306,7 @@ static void handle_mousemotion(SDL_MouseMotionEvent mmev)
 {
 	mousex = mmev.x * csf;
 	mousey = ( fbh - 1 - mmev.y ) * csf;
-	float dx = mmev.xrel * csf / (float)fbh;
+	//float dx = mmev.xrel * csf / (float)fbh;
 	const float dy = mmev.yrel * csf / (float)fbh;
 	char msg[ 80 ];
 
@@ -321,8 +321,6 @@ static void handle_mousemotion(SDL_MouseMotionEvent mmev)
 
 	if ( lmb_down && view_enabled[ VIEWMAIN ] )
 	{
-		snprintf( msg, sizeof( msg ), "movecoi dx=%f dy=%f", dx, dy );
-		nfy_msg( msg );
 	}
 	if ( mmb_down && view_enabled[ VIEWMAIN ] )
 	{
@@ -334,13 +332,15 @@ static void handle_mousemotion(SDL_MouseMotionEvent mmev)
 	}
 	if ( rmb_down && view_enabled[ VIEWMAIN ] )
 	{
-		snprintf( msg, sizeof( msg ), "cameraControl elevationDelta=%f orbitDelta=%f", 3*dy, -3*dx );
-		nfy_msg( msg );
-		nfy_msg( "movecoi dx=0 dy=0" );
 	}
 
-	const bool mb_down = lmb_down || mmb_down || rmb_down;
-	view_touchMove( 1, 0, pointerIds+0, &mousex, &mousey, mb_down );
+	int* pointerId = pointerIds+0;
+
+	const int mb_down =
+		lmb_down ? 1 : 0 +
+		mmb_down ? 2 : 0 +
+		rmb_down ? 4 : 0;
+	view_touchMove( 1, 0, pointerId, &mousex, &mousey, mb_down );
 }
 
 
