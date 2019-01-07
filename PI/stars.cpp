@@ -50,6 +50,14 @@ static cell_t cells[ GRIDRES ][ GRIDRES ];
 
 static aggregate_t* aggregates[ 1+NUMDIMS ] = { 0,0,0,0,0 };
 
+static int numcreated = 0;
+
+#define MAXTRACK	5000
+#define TRACKADV(P)	P = (P+1) % MAXTRACK
+static int	tracked_id = -1;
+static float	tracked_pts[ MAXTRACK ][ 2 ];
+static int	tracked_head = 0;
+static int	tracked_tail = 0;
 
 static const int circle_sz = 12;
 static const float circle_scl = 0.02f;
@@ -138,7 +146,7 @@ void remove_from_cell( int idx, int cx, int cy )
 }
 
 
-int add_to_cell( int cx, int cy, float px, float py, float vx, float vy )
+static int add_to_cell( int cx, int cy, float px, float py, float vx, float vy, int uid )
 {
 	cell_t& cell = cells[ cx ][ cy ];
 	const float EPS = 10e-6;
@@ -156,23 +164,25 @@ int add_to_cell( int cx, int cy, float px, float py, float vx, float vy )
 	);
 	const int i = cell.cnt++;
 	ASSERT( i < CELLCAP );
+	if ( uid < 0 )
+		uid = numcreated++;
 	cell.px[ i ] = px;
 	cell.py[ i ] = py;
 	cell.vx[ i ] = vx;
 	cell.vy[ i ] = vy;
-	cell.st[ i ] = 0;
+	cell.st[ i ] = 0 | ( uid << 8 );
 	return i;
 }
 
 
-int add_star( float px, float py, float vx, float vy )
+static int add_star( float px, float py, float vx, float vy, int uid )
 {
 	const int cx = POS2CELL(px);
 	const int cy = POS2CELL(py);
 	if ( cx < 0 || cx >= GRIDRES ) return -1;
 	if ( cy < 0 || cy >= GRIDRES ) return -1;
 	ASSERTM( cx >= 0 && cx < GRIDRES && cy >= 0 && cy < GRIDRES, "Cell coordinate %d,%d is out of grid bounds for star position %f,%f", cx, cy, px, py );
-	return add_to_cell( cx, cy, px, py, vx, vy );
+	return add_to_cell( cx, cy, px, py, vx, vy, uid );
 }
 
 
@@ -198,13 +208,15 @@ void stars_spawn( int num, float centrex, float centrey, float velx, float vely,
 		const float vy = vely + px * speedscale;
 
 		//const float scl = GRIDRES/2.4f;
-		add_star( centrex + radius*px, centrey + radius*py, vx, vy );
+		add_star( centrex + radius*px, centrey + radius*py, vx, vy, -1 );
 	}
 }
 
 
 void stars_create( void )
 {
+	numcreated = 0;
+	tracked_head = tracked_tail = 0;
 	for ( int cx=0; cx<GRIDRES; ++cx )
 		for ( int cy=0; cy<GRIDRES; ++cy )
 		{
@@ -272,11 +284,51 @@ void stars_create( void )
 }
 
 
+void stars_clear( void )
+{
+	for ( int x=0; x<GRIDRES; ++x )
+		for ( int y=0; y<GRIDRES; ++y )
+		{
+			cell_t& cell = cells[ x ][ y ];
+			cell.cnt = 0;
+		}
+	tracked_id = -1;
+	numcreated = 0;
+}
+
+
 void stars_sprinkle( int cnt, float x, float y, float rad )
 {
 	const float vx = 0;
 	const float vy = 0;
 	stars_spawn( cnt, x, y, vx, vy, rad, false );
+}
+
+
+bool stars_select( float x, float y )
+{
+	const int cx = POS2CELL( x );
+	const int cy = POS2CELL( y );
+	if ( cx < 0 || cx >= GRIDRES || cy < 0 || cy >= GRIDRES )
+		return false;
+	int closest = -1;
+	float closestDistSq = FLT_MAX;
+	const cell_t& cell = cells[ cx ][ cy ];
+	for ( int i=0; i<cell.cnt; ++i )
+	{
+		const float dx = x - cell.px[i];
+		const float dy = y - cell.py[i];
+		float dsqr = dx*dx + dy*dy;
+		if ( dsqr < closestDistSq )
+		{
+			closest = i;
+			closestDistSq = dsqr;
+		}
+	}
+	tracked_id = cell.st[ closest ] >> 8;
+	tracked_head = 0;
+	tracked_tail = 0;
+	return true;
 }
 
 
@@ -290,6 +342,29 @@ int stars_total_count( void )
 			rv += cell.cnt;
 		}
 	return rv;
+}
+
+
+bool stars_find( int uid, int* idx, int* cx, int* cy )
+{
+	for ( int x=0; x<GRIDRES; ++x )
+		for ( int y=0; y<GRIDRES; ++y )
+		{
+			const cell_t& cell = cells[ x ][ y ];
+			const int cnt = cell.cnt;
+			for ( int i=0; i<cnt; ++i )
+				if ( ( cell.st[ i ] >> 8 ) == uid )
+				{
+					*idx = i;
+					*cx = x;
+					*cy = y;
+					return true;
+				}
+		}
+	*idx = -1;
+	*cx = -1;
+	*cy = -1;
+	return false;
 }
 
 
@@ -671,6 +746,7 @@ void stars_update( float dt )
 	float py[ MAXTRANSITS ];
 	float vx[ MAXTRANSITS ];
 	float vy[ MAXTRANSITS ];
+	int   st[ MAXTRANSITS ];
 	int numtransits = 0;
 
 	// Remove stars that went out of cell bounds.
@@ -689,6 +765,7 @@ void stars_update( float dt )
 					py[j] = cell.py[i];
 					vx[j] = cell.vx[i];
 					vy[j] = cell.vy[i];
+					st[j] = cell.st[i];
 					remove_from_cell( i, cx, cy );
 				}
 			}
@@ -698,11 +775,47 @@ void stars_update( float dt )
 	//LOGI( "Num transits: %d", numtransits );
 	for ( int i=0; i<numtransits; ++i )
 	{
-		add_star( px[i], py[i], vx[i], vy[i] );
+		add_star( px[i], py[i], vx[i], vy[i], st[i]>>8 );
 	}
 	TT_END( "transits" );
 
 	debugdraw_crosshairs( 0, 0, 3 );
+
+	if ( tracked_id >= 0 )
+	{
+		int idx,cx,cy;
+		stars_find( tracked_id, &idx, &cx, &cy );
+		if ( idx < 0 )
+		{
+			tracked_id = -1;
+			tracked_head = 0;
+			tracked_tail = 0;
+		}
+		else
+		{
+			const cell_t& cell = cells[ cx ][ cy ];
+			const float x = cell.px[ idx ];
+			const float y = cell.py[ idx ];
+			tracked_pts[ tracked_tail ][ 0 ] = x;
+			tracked_pts[ tracked_tail ][ 1 ] = y;
+			TRACKADV( tracked_tail );
+			if ( tracked_tail == tracked_head )
+				TRACKADV( tracked_head );
+			debugdraw_diamond( x, y, 0.01f / cam_scl );
+			float prvx = FLT_MAX;
+			float prvy = FLT_MAX;
+			for ( int i=tracked_head; i!=tracked_tail; TRACKADV(i) )
+			{
+				const float tx = tracked_pts[ i ][ 0 ];
+				const float ty = tracked_pts[ i ][ 1 ];
+				if ( prvx < FLT_MAX && prvy < FLT_MAX )
+					if ( i&1 )
+						debugdraw_line( prvx, prvy, tx, ty );
+				prvx = tx;
+				prvy = ty;
+			}
+		}
+	}
 }
 
 

@@ -100,9 +100,13 @@ extern void stars_exit( void );
 
 extern void stars_create( void );
 
+extern void stars_clear( void );
+
 extern void stars_calculate_contribution_info( void );
 
 extern void stars_sprinkle( int cnt, float x, float y, float rad );
+
+extern bool stars_select( float px, float py );
 
 extern int  stars_total_count( void );
 

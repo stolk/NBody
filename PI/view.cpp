@@ -665,6 +665,8 @@ void view_setKeyStatus( int keysym, bool down, bool repeat )
 		{
 			return;
 		}
+		if ( keysym == 'x' && down )
+			nfy_msg( "clearfield" );
 	}
 
 	switch( keysym )

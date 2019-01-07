@@ -169,12 +169,32 @@ static void onSprinkle( const char* m )
 {
 	const float x = nfy_flt( m, "x" );
 	const float y = nfy_flt( m, "y" );
-	const int start = nfy_flt( m, "start" );
+	//const int start = nfy_flt( m, "start" );
 	const float px = cam_pos[0] + x / cam_scl / invaspect;
 	const float py = cam_pos[1] + y / cam_scl;
 	const int cnt = 12;
 	const float rad = 0.02 / cam_scl;
 	stars_sprinkle( cnt, px, py, rad );
+}
+
+
+static void onSelect( const char* m )
+{
+	const float x = nfy_flt( m, "x" );
+	const float y = nfy_flt( m, "y" );
+	const int button = nfy_int( m, "button" );
+	if ( button == 0 )
+	{
+		const float px = cam_pos[0] + x / cam_scl / invaspect;
+		const float py = cam_pos[1] + y / cam_scl;
+		stars_select( px, py );
+	}
+}
+
+
+static void onClearfield( const char* m )
+{
+	stars_clear();
 }
 
 
@@ -205,6 +225,8 @@ static void ctrl_init( void )
 	nfy_obs_add( "keymapdlg", onKeymapdlg );
 	nfy_obs_add( "aspect", onAspect );
 	nfy_obs_add( "sprinkle", onSprinkle );
+	nfy_obs_add( "select", onSelect );
+	nfy_obs_add( "clearfield", onClearfield );
 
 	kv_init( ctrl_configPath );
 
