@@ -198,6 +198,16 @@ static void onClearfield( const char* m )
 }
 
 
+static void onClearcell( const char* m )
+{
+	const float x = nfy_flt( m, "x" );
+	const float y = nfy_flt( m, "y" );
+	const float px = cam_pos[0] + x / cam_scl / invaspect;
+	const float py = cam_pos[1] + y / cam_scl;
+	stars_clear_cell( px, py );
+}
+
+
 //! Done once per lifetime of process.
 static void ctrl_init( void )
 {
@@ -227,6 +237,7 @@ static void ctrl_init( void )
 	nfy_obs_add( "sprinkle", onSprinkle );
 	nfy_obs_add( "select", onSelect );
 	nfy_obs_add( "clearfield", onClearfield );
+	nfy_obs_add( "clearcell", onClearcell );
 
 	kv_init( ctrl_configPath );
 

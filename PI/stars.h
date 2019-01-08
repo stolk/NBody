@@ -1,6 +1,6 @@
 #define NUMSTARS	30000	//! Total number of stars.
 #define	GRIDRES		64	//! Grid resolution.
-#define CELLCAP		2000	//! Max stars per cell.
+#define CELLCAP		2700	//! Max stars per cell.
 
 #define ST_CROSSED_LO_X		(1<<0)
 #define ST_CROSSED_HI_X		(1<<1)
@@ -94,25 +94,39 @@ const int req_distances[ 1+NUMDIMS ] =
 #define POS2CELL( P )	( (int) floorf( P + GRIDRES/2 ) )
 
 
+//! Upon program launch.
 extern void stars_init( void );
 
+//! Upon program exit.
 extern void stars_exit( void );
 
+//! Called when app is brought to front on mobile, or once on desktop build.
 extern void stars_create( void );
 
+//! Clear all the stars from the field.
 extern void stars_clear( void );
 
+//! Clear the stars in the cell at specified position.
+extern void stars_clear_cell( float x, float y );
+
+//! Calculate aggregate gravitation.
 extern void stars_calculate_contribution_info( void );
 
+//! Add stars at specified location.
 extern void stars_sprinkle( int cnt, float x, float y, float rad );
 
+//! Select a star to track.,
 extern bool stars_select( float px, float py );
 
+//! Total number of stars in the simulation: sum of stars in each cell.
 extern int  stars_total_count( void );
 
+//! Update the simulation.
 extern void stars_update( float dt );
 
+//! Draw a background grid showing the cells.
 extern void stars_draw_grid( void );
 
+//! Draw the stars.
 extern void stars_draw_field( void );
 

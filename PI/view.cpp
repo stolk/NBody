@@ -665,7 +665,7 @@ void view_setKeyStatus( int keysym, bool down, bool repeat )
 		{
 			return;
 		}
-		if ( keysym == 'x' && down )
+		if ( keysym == 'c' && down )
 			nfy_msg( "clearfield" );
 	}
 

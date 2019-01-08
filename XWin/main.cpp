@@ -261,6 +261,11 @@ static void handle_mousebutton(SDL_MouseButtonEvent mbev)
 	if ( mbev.button == SDL_BUTTON_MIDDLE ) pointerId = pointerIds+1;
 	if ( mbev.button == SDL_BUTTON_RIGHT  ) pointerId = pointerIds+2;
 
+	SDL_Keymod km = SDL_GetModState();
+	const bool altPressed = km & KMOD_ALT;
+	const bool ctlPressed = km & KMOD_CTRL;
+
+
 	if ( down )
 	{
 		const int v = view_touchDown( 1, 0, pointerId, &mousex, &mousey );
@@ -280,6 +285,17 @@ static void handle_mousebutton(SDL_MouseButtonEvent mbev)
 			{
 				mmb_down = down;
 				mb_click |= 2;
+			}
+			if ( altPressed )
+			{
+			}
+			if ( ctlPressed )
+			{
+				const float rx = -1 + 2 * mousex / view_rect( VIEWMAIN ).w;
+				const float ry = -1 + 2 * mousey / view_rect( VIEWMAIN ).h;
+				char m[80];
+				snprintf( m, sizeof(m), "clearcell x=%f y=%f", rx, ry );
+				nfy_msg( m );
 			}
 		}
 	}
@@ -469,7 +485,7 @@ static bool make_window( bool use_aa )
 
 int main( int argc, char* argv[] )
 {
-	int vsync=1;
+	int vsync=0;
 	int autolaunch=-1;
 	for ( int i=1; i<argc; ++i )
 	{

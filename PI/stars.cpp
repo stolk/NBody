@@ -297,6 +297,18 @@ void stars_clear( void )
 }
 
 
+void stars_clear_cell( float x, float y )
+{
+	const int cx = POS2CELL( x );
+	const int cy = POS2CELL( y );
+	if ( cx >= 0 && cx < GRIDRES && cy >= 0 && cy < GRIDRES )
+	{
+		cell_t& cell = cells[ cx ][ cy ];
+		cell.cnt = 0;
+	}
+}
+
+
 void stars_sprinkle( int cnt, float x, float y, float rad )
 {
 	const float vx = 0;
@@ -779,7 +791,7 @@ void stars_update( float dt )
 	}
 	TT_END( "transits" );
 
-	debugdraw_crosshairs( 0, 0, 3 );
+	debugdraw_crosshairs( 0, 0, 0.3f );
 
 	if ( tracked_id >= 0 )
 	{
@@ -823,7 +835,7 @@ void stars_draw_grid( void )
 {
 	static int colourUniform = glpr_uniform( "colour" );
 	float v = cam_scl / 0.50f;
-	glUniform4f( colourUniform, v, v, 0, 1 );
+	glUniform4f( colourUniform, 0.2*v, v, 0.4*v, 1 );
 
 	const int totalv = GRIDRES * GRIDRES * 4 * 2;
 
