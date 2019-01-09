@@ -247,7 +247,7 @@ static void onSpawndemo( const char* m )
 	if ( nr == 0)
 	{
 		stars_add_blackhole = true;
-		stars_spawn( NUMSTARS/2, 0,0,  0,0,  GRIDRES/2.3, true );
+		stars_spawn( NUMSTARS/1, 0,0,  0,0,  GRIDRES/2.3, true );
 	}
 }
 

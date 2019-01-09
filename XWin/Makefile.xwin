@@ -14,7 +14,7 @@ TOPLEVPREFIX=$(HOME)/src/pmu-tools
 TOPLEV=$(TOPLEVPREFIX)/toplev.py
 BARPLOT=$(TOPLEVPREFIX)/tl-barplot.py
 
-#OPTIM=-DDEBUG
+#OPTIM=-DDEBUG -mavx2
 OPTIM=-O3 -mavx2
 #-fsanitize=float-divide-by-zero
 

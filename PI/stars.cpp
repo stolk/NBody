@@ -103,7 +103,7 @@ bool stars_add_blackhole = false;
 //! Called once per lifetime of the application.
 void stars_init( bool multithreaded )
 {
-#if NUMCONCURRENTTASKS
+#if NUMCONCURRENTTASKS > 1
 	if ( multithreaded )
 		starsthreadpool = threadpool_create( NUMCONCURRENTTASKS );
 	LOGI( "Multithreaded operation, using %d threads.", NUMCONCURRENTTASKS );
@@ -423,33 +423,35 @@ void aggregate_cells( void )
 {
 	TT_SCOPE( "aggregate_cells" );
 	// note aggregates[0] is unused, we count aggregate levels from 1 to NUMDIMS
-	aggregate_t* writer = aggregates[ 1 ];
+	ASSERT( aggregates[0] == 0 );
+	aggregate_t* a = aggregates[ 1 ];
+	int nr = 0;
 	for ( int x=0; x<GRIDRES; ++x )
 		for ( int y=0; y<GRIDRES; ++y )
 		{
 			const cell_t& cell = cells[ x ][ y ];
 			const int cnt = cell.cnt;
-			writer->cnt = cnt;
-			memcpy( writer->xrng, cell.xrng, sizeof( cell.xrng ) );
-			memcpy( writer->yrng, cell.yrng, sizeof( cell.yrng ) );
+			a[nr].cnt = cnt;
+			memcpy( a[nr].xrng, cell.xrng, sizeof( cell.xrng ) );
+			memcpy( a[nr].yrng, cell.yrng, sizeof( cell.yrng ) );
 			if ( !cnt )
 			{
-				writer->cx = ( cell.xrng[0] + cell.xrng[1] ) / 2;
-				writer->cy = ( cell.yrng[0] + cell.yrng[1] ) / 2;
+				a[nr].cx = ( cell.xrng[0] + cell.xrng[1] ) / 2;
+				a[nr].cy = ( cell.yrng[0] + cell.yrng[1] ) / 2;
 			}
 			else
 			{
-				writer->cx = 0;
-				writer->cy = 0;
+				a[nr].cx = 0;
+				a[nr].cy = 0;
 				for ( int i=0; i<cnt; ++i )
 				{
-					writer->cx += cell.px[i];
-					writer->cy += cell.py[i];
+					a[nr].cx += cell.px[i];
+					a[nr].cy += cell.py[i];
 				}
-				writer->cx *= ( 1.0f / cnt );
-				writer->cy *= ( 1.0f / cnt );
+				a[nr].cx *= ( 1.0f / cnt );
+				a[nr].cy *= ( 1.0f / cnt );
 			}
-			writer++;
+			nr++;
 		}
 }
 
@@ -701,7 +703,12 @@ void cell_update( int cx, int cy, float dt )
 #if VECTORIZE
 	// Make it an even nr of batches.
 	while ( numsrc & 0xf )
-		src_scl[ numsrc++ ] = 0;
+	{
+		src_x  [ numsrc ] = 0;
+		src_y  [ numsrc ] = 0;
+		src_scl[ numsrc ] = 0;
+		numsrc++;
+	}
 	const int numbatches = numsrc/8;
 #endif
 	TT_END( "gather contribs" );
@@ -718,11 +725,11 @@ void cell_update( int cx, int cy, float dt )
 		const float curx = cell.px[i];
 		const float cury = cell.py[i];
 
+#if VECTORIZE
 		const __m256 curx8 = _mm256_set1_ps( curx );
 		const __m256 cury8 = _mm256_set1_ps( cury );
 		const __m256 G8    = _mm256_set1_ps( G );
 
-#if VECTORIZE
 		__m256 forcex8 = _mm256_setzero_ps();	// all batches accumulate in these.
 		__m256 forcey8 = _mm256_setzero_ps();
 		for ( int batch=0; batch<numbatches; ++batch )
@@ -767,7 +774,7 @@ void cell_update( int cx, int cy, float dt )
 			const float dsqr = dx*dx + dy*dy;
 			float dist = sqrtf( dsqr );
 			dist = dist < 1e-2 ? 1e-2 : dist;
-			const float magn = ( src_scl[s] * G ) / ( dist*dist*dist );
+			const float magn = ( scl * G ) / ( dist*dist*dist );
 			ax += magn * dx;
 			ay += magn * dy;
 		}
@@ -1011,12 +1018,18 @@ void stars_draw_field( void )
 	if ( !totalv )
 		return;
 
+	if ( totalv > NUMSTARS )
+	{
+		LOGE( "Exceeded maximum(%d) nr of stars: %d", NUMSTARS, totalv );
+		totalv = NUMSTARS;
+	}
+
 	int writer = 0;
 	for ( int cx=0; cx<GRIDRES; ++cx )
 		for ( int cy=0; cy<GRIDRES; ++cy )
 		{
 			cell_t& cell = cells[ cx ][ cy ];
-			for ( int i=0; i<cell.cnt; ++i )
+			for ( int i=0; i<cell.cnt && writer < NUMSTARS; ++i )
 			{
 				vdata.displacements[ writer ][ 0 ] = cell.px[ i ];
 				vdata.displacements[ writer ][ 1 ] = cell.py[ i ];

@@ -261,7 +261,7 @@ static void handle_mousebutton(SDL_MouseButtonEvent mbev)
 	if ( mbev.button == SDL_BUTTON_MIDDLE ) pointerId = pointerIds+1;
 	if ( mbev.button == SDL_BUTTON_RIGHT  ) pointerId = pointerIds+2;
 
-	SDL_Keymod km = SDL_GetModState();
+	const SDL_Keymod km = SDL_GetModState();
 	const bool altPressed = km & KMOD_ALT;
 	const bool ctlPressed = km & KMOD_CTRL;
 
@@ -356,7 +356,10 @@ static void handle_mousemotion(SDL_MouseMotionEvent mmev)
 		lmb_down ? 1 : 0 +
 		mmb_down ? 2 : 0 +
 		rmb_down ? 4 : 0;
-	view_touchMove( 1, 0, pointerId, &mousex, &mousey, mb_down );
+	const SDL_Keymod km = SDL_GetModState();
+	const bool ctlPressed = km & KMOD_CTRL;
+	const bool altPressed = km & KMOD_ALT;
+	view_touchMove( 1, 0, pointerId, &mousex, &mousey, mb_down, ctlPressed, altPressed );
 }
 
 

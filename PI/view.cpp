@@ -164,7 +164,7 @@ int view_touchDown( int pointerCount, int pointerIdx, int* pointerIds, float* po
 		float x = pointerX[ i ];
 		float y = pointerY[ i ];
 		int v = viewHit( x, y );
-		LOGI( "pointerId 0x%x hit view %d at %.1f,%.1f", pointerId, v, x, y );
+		//LOGI( "pointerId 0x%x hit view %d at %.1f,%.1f", pointerId, v, x, y );
 		if ( v != -1 )
 		{
 			touches[ v ].x = x;
