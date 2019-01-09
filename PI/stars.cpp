@@ -45,6 +45,7 @@ extern "C"
 
 
 static const float G = 0.0002f;
+static const float BLACKHOLEMASS = 20000.0f;
 
 static cell_t cells[ GRIDRES ][ GRIDRES ];
 
@@ -60,7 +61,7 @@ static int	tracked_head = 0;
 static int	tracked_tail = 0;
 
 static const int circle_sz = 12;
-static const float circle_scl = 0.02f;
+static float circle_scl = 0.02f;
 
 typedef struct
 {
@@ -198,6 +199,9 @@ static int add_star( float px, float py, float vx, float vy, int uid )
 void stars_spawn( int num, float centrex, float centrey, float velx, float vely, float radius, bool addrot )
 {
 	static int idx=0;
+	int numstars = stars_total_count();
+	float totalmass = (numstars+num) + (stars_add_blackhole ? BLACKHOLEMASS : 0.0f);
+	const float magicfactor = totalmass / 58000.0f;
 
 	for ( int i=0; i<num; ++i )
 	{
@@ -211,14 +215,52 @@ void stars_spawn( int num, float centrex, float centrey, float velx, float vely,
 			dsqr = px*px + py*py;
 		} while ( dsqr >= 1.0f );
 
-		const float dist = sqrtf( dsqr );
-		const float speedscale = addrot ? 0.6f / dist : 0;
-		const float vx = velx - py * speedscale;
-		const float vy = vely + px * speedscale;
+		const float starx = centrex + radius*px;
+		const float stary = centrey + radius*py;
 
-		//const float scl = GRIDRES/2.4f;
-		add_star( centrex + radius*px, centrey + radius*py, vx, vy, -1 );
+		float speedscale = 0;
+		if ( addrot )
+		{
+			const float absdist = sqrtf( starx*starx + stary*stary );
+			speedscale = magicfactor / absdist;
+		}
+
+		const float vx = velx - stary * speedscale;
+		const float vy = vely + starx * speedscale;
+
+		add_star
+		(
+			starx, stary,	// position.
+			vx, vy,		// velocity.
+			-1		// new star: create unique id for it.
+		);
 	}
+}
+
+
+void stars_set_splat_radius( float splatrad )
+{
+	for ( int i=0; i<circle_sz; ++i )
+	{
+		const float a0 = M_PI * 2 / circle_sz * ( i+0 );
+		const float a1 = M_PI * 2 / circle_sz * ( i+1 );
+		const float x0 = splatrad * cosf( a0 );
+		const float y0 = splatrad * sinf( a0 );
+		const float x1 = splatrad * cosf( a1 );
+		const float y1 = splatrad * sinf( a1 );
+		float* writer = vdata.circle[i][0];
+		*writer++ =  0; *writer++ =  0;
+		*writer++ = x0; *writer++ = y0;
+		*writer++ = x1; *writer++ = y1;
+	}
+}
+
+
+void stars_change_splat_radius( float d )
+{
+	circle_scl += d;
+	circle_scl = circle_scl < 0.01f ? 0.01f : circle_scl;
+	stars_set_splat_radius( circle_scl );
 }
 
 
@@ -250,9 +292,8 @@ void stars_create( void )
 	stars_spawn( num, -off, -off/4,  0.01f,  0.14f, rad, true );
 	stars_spawn( num,  off,  off/4, -0.01f, -0.14f, rad, true );
 #endif
-#if 1
+#if 0
 	stars_spawn( NUMSTARS/4, 0,0,  0,0,  GRIDRES/2.3, true );
-	//stars_spawn( NUMSTARS, 0,0,  0,0,  GRIDRES/7.3, true );
 #endif
 
 	float maxcnt=0;
@@ -278,19 +319,7 @@ void stars_create( void )
 	stars_calculate_contribution_info();
 	LOGI( "Calculated contribution info." );
 
-	for ( int i=0; i<circle_sz; ++i )
-	{
-		const float a0 = M_PI * 2 / circle_sz * ( i+0 );
-		const float a1 = M_PI * 2 / circle_sz * ( i+1 );
-		const float x0 = circle_scl * cosf( a0 );
-		const float y0 = circle_scl * sinf( a0 );
-		const float x1 = circle_scl * cosf( a1 );
-		const float y1 = circle_scl * sinf( a1 );
-		float* writer = vdata.circle[i][0];
-		*writer++ =  0; *writer++ =  0;
-		*writer++ = x0; *writer++ = y0;
-		*writer++ = x1; *writer++ = y1;
-	}
+	stars_set_splat_radius( circle_scl );
 }
 
 
@@ -319,11 +348,11 @@ void stars_clear_cell( float x, float y )
 }
 
 
-void stars_sprinkle( int cnt, float x, float y, float rad )
+void stars_sprinkle( int cnt, float x, float y, float rad, bool addrot )
 {
 	const float vx = 0;
 	const float vy = 0;
-	stars_spawn( cnt, x, y, vx, vy, rad, false );
+	stars_spawn( cnt, x, y, vx, vy, rad, addrot );
 }
 
 
@@ -664,7 +693,7 @@ void cell_update( int cx, int cy, float dt )
 	{
 		src_x  [ numsrc ] = 0.0f;
 		src_y  [ numsrc ] = 0.0f;
-		src_scl[ numsrc ] = 20000.0f;
+		src_scl[ numsrc ] = BLACKHOLEMASS;
 		numsrc++;
 	}
 	ASSERT( numsrc <= MAXSOURCES );
@@ -965,8 +994,10 @@ void stars_draw_grid( void )
 void stars_draw_field( void )
 {
 	static int colourUniform = glpr_uniform( "colour" );
+	static int splatscaleUniform = glpr_uniform( "splatscale" );
 
-	float v = cam_scl / 0.20f;
+	glUniform1f( splatscaleUniform, 12 * circle_scl / cam_scl );
+	float v = 0.002f * cam_scl / (circle_scl*circle_scl);
 	glUniform4f( colourUniform, v,v,v,v );
 
 	int totalv = 0;

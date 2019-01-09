@@ -98,7 +98,7 @@ bool ctrl_draw_create( void )
 	const char* attribs_main = "position";
 
 	const char* uniforms_font = "rotx,roty,translation,colour";
-	const char* uniforms_star = "rotx,roty,translation,colour,invaspect";
+	const char* uniforms_star = "rotx,roty,translation,colour,invaspect,splatscale";
 	const char* uniforms_main = "rotx,roty,translation,colour,invaspect";
 
 	bool ok;

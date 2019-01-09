@@ -170,12 +170,13 @@ static void onSprinkle( const char* m )
 {
 	const float x = nfy_flt( m, "x" );
 	const float y = nfy_flt( m, "y" );
+	const int addrot = nfy_int( m, "addrot" );
 	//const int start = nfy_flt( m, "start" );
 	const float px = cam_pos[0] + x / cam_scl / invaspect;
 	const float py = cam_pos[1] + y / cam_scl;
 	const int cnt = 12;
 	const float rad = sprinkle_radius / cam_scl;
-	stars_sprinkle( cnt, px, py, rad );
+	stars_sprinkle( cnt, px, py, rad, addrot );
 }
 
 
@@ -192,7 +193,7 @@ static void onSelect( const char* m )
 	}
 	if ( button == 2 )
 	{
-		stars_sprinkle( 1, px, py, 0.02f );
+		stars_sprinkle( 1, px, py, 0.02f, false );
 	}
 }
 
@@ -239,6 +240,26 @@ static void onBlackhole( const char* m )
 }
 
 
+static void onSpawndemo( const char* m )
+{
+	const int nr = nfy_int( m, "nr" );
+	stars_clear();
+	if ( nr == 0)
+	{
+		stars_add_blackhole = true;
+		stars_spawn( NUMSTARS/2, 0,0,  0,0,  GRIDRES/2.3, true );
+	}
+}
+
+
+static void onSplatradius( const char* m )
+{
+	const float delta = nfy_flt( m, "delta" );
+	if ( delta > -FLT_MAX )
+		stars_change_splat_radius( delta );
+}
+
+
 //! Done once per lifetime of process.
 static void ctrl_init( void )
 {
@@ -272,6 +293,8 @@ static void ctrl_init( void )
 	nfy_obs_add( "brush", onBrush );
 	nfy_obs_add( "show", onShow );
 	nfy_obs_add( "blackhole", onBlackhole );
+	nfy_obs_add( "spawndemo", onSpawndemo );
+	nfy_obs_add( "splatradius", onSplatradius );
 
 	kv_init( ctrl_configPath );
 

@@ -112,6 +112,9 @@ extern void stars_exit( void );
 //! Called when app is brought to front on mobile, or once on desktop build.
 extern void stars_create( void );
 
+//! Add stars to the world.
+extern void stars_spawn( int num, float centrex, float centrey, float velx, float vely, float radius, bool addrot );
+
 //! Clear all the stars from the field.
 extern void stars_clear( void );
 
@@ -122,7 +125,7 @@ extern void stars_clear_cell( float x, float y );
 extern void stars_calculate_contribution_info( void );
 
 //! Add stars at specified location.
-extern void stars_sprinkle( int cnt, float x, float y, float rad );
+extern void stars_sprinkle( int cnt, float x, float y, float rad, bool addrot );
 
 //! Select a star to track.,
 extern bool stars_select( float px, float py );
@@ -138,4 +141,7 @@ extern void stars_draw_grid( void );
 
 //! Draw the stars.
 extern void stars_draw_field( void );
+
+//! The size of the particles on screen.
+extern void stars_change_splat_radius( float d );
 

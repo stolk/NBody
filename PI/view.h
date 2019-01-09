@@ -50,7 +50,7 @@ extern void view_touchUp( int pointerCount, int pointerIdx, int* pointerIds, flo
 
 extern void view_touchCancel( int pointerCount, int pointerIdx, int* pointerIds, float* pointerX, float* pointerY );
 
-extern void view_touchMove( int pointerCount, int pointerIdx, int* pointerIds, float* pointerX, float* pointerY, int mb_down );
+extern void view_touchMove( int pointerCount, int pointerIdx, int* pointerIds, float* pointerX, float* pointerY, int mb_down, bool ctlPressed, bool altPressed );
 
 extern void view_mouseMove( float dx, float dy );
 

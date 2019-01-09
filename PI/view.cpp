@@ -164,7 +164,7 @@ int view_touchDown( int pointerCount, int pointerIdx, int* pointerIds, float* po
 		float x = pointerX[ i ];
 		float y = pointerY[ i ];
 		int v = viewHit( x, y );
-		//LOGI( "pointer %d(%x) hit view %d at %.1f,%.1f", i, pointerId, v, x, y );
+		LOGI( "pointerId 0x%x hit view %d at %.1f,%.1f", pointerId, v, x, y );
 		if ( v != -1 )
 		{
 			touches[ v ].x = x;
@@ -184,9 +184,11 @@ int view_touchDown( int pointerCount, int pointerIdx, int* pointerIds, float* po
 					nfy_msg( "menu" );
 					break;
 				case VIEWMAIN :
+#if 1
 					if ( !addCamTouch( pointerId, x, y ) )
 						LOGE( "Failed to add camera touch for pointerId %d. numCamTouches = %d", pointerId, numCamTouches );
 					ASSERT( numCamTouches <= 16 );
+#endif
 					break;
 				case VIEWLVLS:
 					break;
@@ -287,89 +289,54 @@ void view_mouseMove( float dx, float dy )
 }
 
 
-void view_touchMove( int pointerCount, int pointerIdx, int* pointerIds, float* pointerX, float* pointerY, int mb_down )
+void view_touchMove( int pointerCount, int pointerIdx, int* pointerIds, float* pointerX, float* pointerY, int mb_down, bool ctlPressed, bool altPressed )
 {
 	for ( int i=0; i<pointerCount; ++i )
 	{
-		int pointerId = pointerIds[ i ];
+		//int pointerId = pointerIds[ i ];
 		float x = pointerX[ i ];
 		float y = pointerY[ i ];
 		char msg[128];
 
-		// Handle camera touches
-		for ( int j=0; j<numCamTouches; ++j )
-			if ( camTouches[ j ].pointerId == pointerId )
-			{
-				if ( numCamTouches == 1 )
-				{
-					float dx = x - camTouches[ 0 ].x;
-					float dy = y - camTouches[ 0 ].y;
-					camTouches[ 0 ].x = x;
-					camTouches[ 0 ].y = y;
-					const float deltaX = dx / (float)rects[ VIEWMAIN ].w;
-					const float deltaY = dy / (float)rects[ VIEWMAIN ].h;
-        				snprintf( msg, 80, "camera movex=%f movey=%f", -2.0f * deltaX, -2.0f * deltaY );
-				        nfy_msg( msg );
-				}
-				else
-				{
-					float fr0x = camTouches[ 0 ].x;
-					float fr0y = camTouches[ 0 ].y;
-					float fr1x = camTouches[ 1 ].x;
-					float fr1y = camTouches[ 1 ].y;
-					camTouches[ j ].x = x;
-					camTouches[ j ].y = y;
-					float to0x = camTouches[ 0 ].x;
-					float to0y = camTouches[ 0 ].y;
-					float to1x = camTouches[ 1 ].x;
-					float to1y = camTouches[ 1 ].y;
-			                const float fr_l = sqrtf( ( fr1x - fr0x ) * ( fr1x - fr0x ) + ( fr1y - fr0y ) * ( fr1y - fr0y ) );
-			                const float to_l = sqrtf( ( to1x - to0x ) * ( to1x - to0x ) + ( to1y - to0y ) * ( to1y - to0y ) );
-					snprintf( msg, 80, "cameraControl distScale=%f", fr_l/to_l );
-					nfy_msg( msg );
-				}
-			}
-
-		if ( mb_down & 4 && view_enabled[ VIEWMAIN ] )
-		{
-			x -= rects[ VIEWMAIN ].x;
-			y -= rects[ VIEWMAIN ].y;
-			const float rx = -1 + 2 * x / rects[ VIEWMAIN ].w;
-			const float ry = -1 + 2 * y / rects[ VIEWMAIN ].h;
-			char m[80];
-			snprintf( m, sizeof(m), "sprinkle start=0 x=%f y=%f", rx, ry );
-			nfy_msg( m );
-			continue;
-		}
-
-		int v = viewForPointerId( pointerId );
+		int v = -1;
+		if ( mb_down & 1 ) v = viewForPointerId( 0 );
+		if ( mb_down & 2 ) v = viewForPointerId( 1 );
+		if ( mb_down & 4 ) v = viewForPointerId( 2 );
 		if ( v != -1 )
 		{
 			//LOGI( "pointer %d(%d) moved for view %d", i, pointerId, v );
 			float dx = x - touches[ v ].x;
 			float dy = y - touches[ v ].y;
-			touches[ v ].x = x;
-			touches[ v ].y = y;
 			touches[ v ].movex += dx;
 			touches[ v ].movey += dy;
 			touches[ v ].moved = true;
+			const float rdx = dx / rects[ v ].w;
+			const float rdy = dy / rects[ v ].h;
+			touches[ v ].x = x;
+			touches[ v ].y = y;
+			x -= rects[ v ].x;
+			y -= rects[ v ].y;
+			const float rx = -1 + 2 * x / rects[ v ].w;
+			const float ry = -1 + 2 * y / rects[ v ].h;
 
 			switch( v )
 			{
 				case VIEWMAIN:
-					if ( pointerId == 2 )
+					if ( mb_down & 1 )
+					{
+						snprintf( msg, sizeof(msg), "sprinkle start=0 x=%f y=%f addrot=%d", rx, ry, altPressed );
+						nfy_msg( msg );
+					}
+					if ( mb_down & 2 )
 					{
 						break;
 					}
-					snprintf
-					(
-						msg, sizeof(msg),
-						"drag dx=%f dy=%f movex=%f movey=%f",
-						dx, dy, 
-						touches[ v ].movex / rects[v].w, touches[ v ].movey / rects[v].h
-					);
-					nfy_msg( msg );
-					break;
+					if ( mb_down & 4 )
+					{
+        					snprintf( msg, sizeof(msg), "camera movex=%f movey=%f", -2.0f * rdx, -2.0f * rdy );
+					        nfy_msg( msg );
+						break;
+					}
 			}
 		}
 	}
@@ -677,6 +644,8 @@ void view_setKeyStatus( int keysym, bool down, bool repeat )
 			nfy_msg( "brush radius=4" );
 		if ( keysym == '5' && down )
 			nfy_msg( "brush radius=5" );
+		if ( keysym == 0x4000003B && down )	// F2
+			nfy_msg( "spawndemo nr=0" );
 	}
 
 	switch( keysym )
@@ -700,6 +669,12 @@ void view_setKeyStatus( int keysym, bool down, bool repeat )
 			break;
 		case 'b':
 			if ( down ) snprintf( m, sizeof(m), "blackhole toggle=1" );
+			break;
+		case 0x4000004B:	// SDLK_PAGEUP
+			if ( down ) snprintf( m, sizeof(m), "splatradius delta=0.01" );
+			break;
+		case 0x4000004E:	// SDLK_PAGEDN
+			if ( down ) snprintf( m, sizeof(m), "splatradius delta=-0.01" );
 			break;
 	}
 
