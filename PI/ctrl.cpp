@@ -165,6 +165,7 @@ static void onAspect( const char* m )
 }
 
 
+static float sprinkle_radius = 0.02f;
 static void onSprinkle( const char* m )
 {
 	const float x = nfy_flt( m, "x" );
@@ -173,7 +174,7 @@ static void onSprinkle( const char* m )
 	const float px = cam_pos[0] + x / cam_scl / invaspect;
 	const float py = cam_pos[1] + y / cam_scl;
 	const int cnt = 12;
-	const float rad = 0.02 / cam_scl;
+	const float rad = sprinkle_radius / cam_scl;
 	stars_sprinkle( cnt, px, py, rad );
 }
 
@@ -183,11 +184,15 @@ static void onSelect( const char* m )
 	const float x = nfy_flt( m, "x" );
 	const float y = nfy_flt( m, "y" );
 	const int button = nfy_int( m, "button" );
+	const float px = cam_pos[0] + x / cam_scl / invaspect;
+	const float py = cam_pos[1] + y / cam_scl;
 	if ( button == 0 )
 	{
-		const float px = cam_pos[0] + x / cam_scl / invaspect;
-		const float py = cam_pos[1] + y / cam_scl;
 		stars_select( px, py );
+	}
+	if ( button == 2 )
+	{
+		stars_sprinkle( 1, px, py, 0.02f );
 	}
 }
 
@@ -205,6 +210,32 @@ static void onClearcell( const char* m )
 	const float px = cam_pos[0] + x / cam_scl / invaspect;
 	const float py = cam_pos[1] + y / cam_scl;
 	stars_clear_cell( px, py );
+}
+
+
+static void onBrush( const char* m )
+{
+	const int radius = nfy_int( m, "radius" );
+	sprinkle_radius = radius * 0.02f;
+}
+
+
+static void onShow( const char* m )
+{
+	const int toggle_grid = nfy_int( m, "toggle_grid" );
+	const int toggle_aggr = nfy_int( m, "toggle_aggr" );
+	if ( toggle_grid > 0 ) stars_show_grid = !stars_show_grid;
+	if ( toggle_aggr > 0 ) stars_show_aggr = !stars_show_aggr;
+}
+
+
+static void onBlackhole( const char* m )
+{
+	const int toggle = nfy_int( m, "toggle" );
+	if ( toggle > 0 )
+	{
+		stars_add_blackhole = !stars_add_blackhole;
+	}
 }
 
 
@@ -238,6 +269,9 @@ static void ctrl_init( void )
 	nfy_obs_add( "select", onSelect );
 	nfy_obs_add( "clearfield", onClearfield );
 	nfy_obs_add( "clearcell", onClearcell );
+	nfy_obs_add( "brush", onBrush );
+	nfy_obs_add( "show", onShow );
+	nfy_obs_add( "blackhole", onBlackhole );
 
 	kv_init( ctrl_configPath );
 

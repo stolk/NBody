@@ -47,8 +47,8 @@ typedef struct
 	int cnt;
 	float cx;
 	float cy;
-	float rngx[2];
-	float rngy[2];
+	float xrng[2];
+	float yrng[2];
 } aggregate_t;
 
 #define NUMDIMS 5
@@ -93,9 +93,18 @@ const int req_distances[ 1+NUMDIMS ] =
 
 #define POS2CELL( P )	( (int) floorf( P + GRIDRES/2 ) )
 
+//! Toggle to show a grid.
+extern bool stars_show_grid;
+
+//! Toggle to show the aggragations.
+extern bool stars_show_aggr;
+
+//! Optionally add a black hole at the centre of the grid.
+extern bool stars_add_blackhole;
+
 
 //! Upon program launch.
-extern void stars_init( void );
+extern void stars_init( bool multithreaded = true );
 
 //! Upon program exit.
 extern void stars_exit( void );

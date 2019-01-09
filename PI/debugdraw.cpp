@@ -56,6 +56,18 @@ void debugdraw_crosshairs( float px, float py, float sz )
 }
 
 
+void debugdraw_triangle( float px, float py, float sz )
+{
+	const float ty = py + 0.5f * sz;
+	const float by = py - 0.5f * 0.5f * sz;
+	const float lx = px - 0.5f * 0.866025f * sz;
+	const float rx = px + 0.5f * 0.866025f * sz;
+	debugdraw_line( px, ty,  rx, by );
+	debugdraw_line( rx, by,  lx, by );
+	debugdraw_line( lx, by,  px, ty );
+}
+
+
 void debugdraw_diamond( float x, float y, float sz )
 {
 	const float offs[4][2] =
@@ -77,7 +89,7 @@ void debugdraw_diamond( float x, float y, float sz )
 void debugdraw_arrow( float frx, float fry, float tox, float toy )
 {
 	const float d[2]  = { tox-frx, toy-fry };
-	const float t[2]  = { d[1], d[0] };
+	const float t[2]  = { d[1], -d[0] };
 	const float q[2]  = { frx + d[0]*0.9f, fry + d[1]*0.9f };
 	const float p0[2] = { q[0] + t[0]*0.1f, q[1] + t[1]*0.1f };
 	const float p1[2] = { q[0] + t[0]*-0.1f, q[1] + t[1]*-0.1f };

@@ -92,11 +92,20 @@ static contribinfo_t contribs[ GRIDRES ][ GRIDRES ];
 static threadpool_t* starsthreadpool = 0;
 
 
+bool stars_show_grid = true;
+
+bool stars_show_aggr = false;
+
+bool stars_add_blackhole = false;
+
+
 //! Called once per lifetime of the application.
-void stars_init( void )
+void stars_init( bool multithreaded )
 {
 #if NUMCONCURRENTTASKS
-	starsthreadpool = threadpool_create( NUMCONCURRENTTASKS );
+	if ( multithreaded )
+		starsthreadpool = threadpool_create( NUMCONCURRENTTASKS );
+	LOGI( "Multithreaded operation, using %d threads.", NUMCONCURRENTTASKS );
 #endif
 	LOGI( "sizeof(cells) = %d", (int) sizeof(cells) );
 }
@@ -203,7 +212,7 @@ void stars_spawn( int num, float centrex, float centrey, float velx, float vely,
 		} while ( dsqr >= 1.0f );
 
 		const float dist = sqrtf( dsqr );
-		const float speedscale = addrot ? 0.9f * ( 1.0f - 0.9f * dist ) : 0;
+		const float speedscale = addrot ? 0.6f / dist : 0;
 		const float vx = velx - py * speedscale;
 		const float vy = vely + px * speedscale;
 
@@ -241,8 +250,9 @@ void stars_create( void )
 	stars_spawn( num, -off, -off/4,  0.01f,  0.14f, rad, true );
 	stars_spawn( num,  off,  off/4, -0.01f, -0.14f, rad, true );
 #endif
-#if 0
-	stars_spawn( NUMSTARS, 0,0,  0,0,  GRIDRES/2.3 );
+#if 1
+	stars_spawn( NUMSTARS/4, 0,0,  0,0,  GRIDRES/2.3, true );
+	//stars_spawn( NUMSTARS, 0,0,  0,0,  GRIDRES/7.3, true );
 #endif
 
 	float maxcnt=0;
@@ -391,6 +401,8 @@ void aggregate_cells( void )
 			const cell_t& cell = cells[ x ][ y ];
 			const int cnt = cell.cnt;
 			writer->cnt = cnt;
+			memcpy( writer->xrng, cell.xrng, sizeof( cell.xrng ) );
+			memcpy( writer->yrng, cell.yrng, sizeof( cell.yrng ) );
 			if ( !cnt )
 			{
 				writer->cx = ( cell.xrng[0] + cell.xrng[1] ) / 2;
@@ -442,6 +454,10 @@ int aggregate_level( int lvl )
 			const float scl = writer->cnt ? 1.0f / writer->cnt : 1.0f;
 			writer->cx *= scl;
 			writer->cy *= scl;
+			writer->xrng[0] = s0->xrng[0];
+			writer->yrng[0] = s0->yrng[0];
+			writer->xrng[1] = s3->xrng[1];
+			writer->yrng[1] = s3->yrng[1];
 			highcnt = writer->cnt > highcnt ? writer->cnt : highcnt;
 			reader += 2;
 			writer += 1;
@@ -551,6 +567,47 @@ void stars_calculate_contribution_info( void )
 }
 
 
+static void cell_draw_aggregates( int cx, int cy )
+{
+	cell_t& cell = cells[ cx ][ cy ];
+	const int cnt = cell.cnt;
+	if ( !cnt ) return;
+
+	const contribinfo_t& contrib = contribs[ cx ][ cy ];
+	const int count0 = contrib.counts[0];
+	int reader = count0;
+
+	// level [1..NUMDIMS] (inclusive) are aggregates.
+	for ( int level=1; level<=NUMDIMS; ++level )
+	{
+		const int countn = contrib.counts[ level ];
+		const int res = grid_resolutions[ level ];
+		for ( int i=0; i<countn; ++i )
+		{
+			const int code = contrib.sortedcoords[ reader++ ];
+			const int x = ( code >> 0 ) & 0xff;
+			const int y = ( code >> 8 ) & 0xff;
+			aggregate_t& ag = aggregates[ level ][ x * res + y ];
+			if ( ag.cnt )
+			{
+#if 0
+				const float scl = ag.cnt; 
+				const float dx = cellpx - ag.cx;
+				const float dy = cellpy - ag.cy;
+				const float dsqr = dx*dx + dy*dy;
+				const float dist = sqrtf( dsqr );
+				const float len = scl * 0.2 / (dist*dsqr);
+				debugdraw_line( ag.cx, ag.cy, ag.cx + len*dx, ag.cy + len*dy );
+#else
+				debugdraw_rect( ag.xrng[0], ag.yrng[0], ag.xrng[1], ag.yrng[1] );
+				debugdraw_triangle( ag.cx, ag.cy, 0.2 );
+#endif
+			}
+		}
+	}
+}
+
+
 #define MAXSOURCES	( MAXCONTRIBS + 8 * CELLCAP )
 void cell_update( int cx, int cy, float dt )
 {
@@ -600,17 +657,17 @@ void cell_update( int cx, int cy, float dt )
 			src_scl[ numsrc ] = ag.cnt;
 			if ( ag.cnt )
 				numsrc++;
-			ASSERT( numsrc <= MAXSOURCES );
 		}
 	}
 
-#if 0
-	// add a black hole.
-	src_x  [ numsrc ] = 0.0f;
-	src_y  [ numsrc ] = 0.0f;
-	src_scl[ numsrc ] = 20000.0f;
-	numsrc++;
-#endif
+	if ( stars_add_blackhole )
+	{
+		src_x  [ numsrc ] = 0.0f;
+		src_y  [ numsrc ] = 0.0f;
+		src_scl[ numsrc ] = 20000.0f;
+		numsrc++;
+	}
+	ASSERT( numsrc <= MAXSOURCES );
 
 #if VECTORIZE
 	// Make it an even nr of batches.
@@ -791,8 +848,10 @@ void stars_update( float dt )
 	}
 	TT_END( "transits" );
 
-	debugdraw_crosshairs( 0, 0, 0.3f );
+	if ( stars_show_grid )
+		debugdraw_crosshairs( 0, 0, 0.3f );
 
+	// Draw the track of the selected star.
 	if ( tracked_id >= 0 )
 	{
 		int idx,cx,cy;
@@ -826,13 +885,26 @@ void stars_update( float dt )
 				prvx = tx;
 				prvy = ty;
 			}
+			if ( stars_show_aggr )
+				cell_draw_aggregates( cx, cy );
 		}
 	}
+
+	// Show indication for black hole.
+	if ( stars_add_blackhole )
+		for ( int i=0; i<16; ++i )
+		{
+			const float a = 2 * M_PI * (i+0.5f) / 16;
+			const float x = cosf( a );
+			const float y = sinf( a );
+			debugdraw_arrow( 1.2f*x, 1.2f*y, 0.7f*x, 0.7f*y );
+		}
 }
 
 
 void stars_draw_grid( void )
 {
+	if ( !stars_show_grid ) return;
 	static int colourUniform = glpr_uniform( "colour" );
 	float v = cam_scl / 0.50f;
 	glUniform4f( colourUniform, 0.2*v, v, 0.4*v, 1 );

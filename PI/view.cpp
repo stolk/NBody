@@ -176,8 +176,8 @@ int view_touchDown( int pointerCount, int pointerIdx, int* pointerIds, float* po
 			touches[ v ].moved = 0;
 			x -= rects[ v ].x;
 			y -= rects[ v ].y;
-			const float rx = x / rects[ v ].w;
-			const float ry = y / rects[ v ].h;
+			//const float rx = x / rects[ v ].w;
+			//const float ry = y / rects[ v ].h;
 			switch( v )
 			{
 				case VIEWPAUS:
@@ -667,6 +667,16 @@ void view_setKeyStatus( int keysym, bool down, bool repeat )
 		}
 		if ( keysym == 'c' && down )
 			nfy_msg( "clearfield" );
+		if ( keysym == '1' && down )
+			nfy_msg( "brush radius=1" );
+		if ( keysym == '2' && down )
+			nfy_msg( "brush radius=2" );
+		if ( keysym == '3' && down )
+			nfy_msg( "brush radius=3" );
+		if ( keysym == '4' && down )
+			nfy_msg( "brush radius=4" );
+		if ( keysym == '5' && down )
+			nfy_msg( "brush radius=5" );
 	}
 
 	switch( keysym )
@@ -680,9 +690,16 @@ void view_setKeyStatus( int keysym, bool down, bool repeat )
 			if ( down ) snprintf( m, sizeof(m), "camera trackscale=1.1f" );
 			break;
 		case 0x60:		// SDLK_BACKQUOTE / TILDE
+			if ( down ) snprintf( m, sizeof(m), "show toggle_grid=1" );
 			break;
 		case 0x40000048:	// SDLK_PAUSE
 			if ( down && !repeat ) snprintf( m, sizeof(m), "pause toggle=1" );
+			break;
+		case 'p':
+			if ( down ) snprintf( m, sizeof(m), "show toggle_aggr=1" );
+			break;
+		case 'b':
+			if ( down ) snprintf( m, sizeof(m), "blackhole toggle=1" );
 			break;
 	}
 

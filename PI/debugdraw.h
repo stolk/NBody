@@ -17,6 +17,8 @@ extern void debugdraw_draw( void );
 
 extern void debugdraw_crosshairs( float px, float py, float sz );
 
+extern void debugdraw_triangle( float px, float py, float sz );
+
 extern void debugdraw_arrow( float x0, float y0, float x1, float y1 );
 
 extern void debugdraw_angle( float px, float py, float dx, float dy, float ang, float sz );
