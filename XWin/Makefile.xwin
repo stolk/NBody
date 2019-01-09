@@ -10,6 +10,9 @@ BASEPREFIX=$(HOME)/apps/GBase/src
 PIPREFIX=PI
 DBLUNTPREFIX=$(HOME)/src/dutch-blunt/src
 TTPREFIX=$(HOME)/src/ThreadTracer
+TOPLEVPREFIX=$(HOME)/src/pmu-tools
+TOPLEV=$(TOPLEVPREFIX)/toplev.py
+BARPLOT=$(TOPLEVPREFIX)/tl-barplot.py
 
 #OPTIM=-DDEBUG
 OPTIM=-O3 -mavx2
@@ -133,6 +136,9 @@ run: nbody
 nbody:libbase.a libdblunt.a libpi.a XWin/main.o $(TTPREFIX)/threadtracer.o
 	$(CXX) $(LDFLAGS) -onbody XWin/main.o $(TTPREFIX)/threadtracer.o -lpi -ldblunt -lbase $(LIBS)
 
+bench:libbase.a libpi.a PI/bench.o
+	$(CXX) $(LDFLAGS) -obench PI/bench.o $(TTPREFIX)/threadtracer.o -lpi -lbase $(LIBS)
+
 
 libbase.a:$(BASEOBJS)
 	$(AR) rcsv $*.a $(BASEOBJS)
@@ -158,6 +164,13 @@ graph.svg: nbody
 	$(PERF) script | $(HOME)/src/FlameGraph/stackcollapse-perf.pl > out.perf-folded
 	$(HOME)/src/FlameGraph/flamegraph.pl out.perf-folded > graph.svg
 	-firefox graph.svg
+
+toplev:
+	$(TOPLEV) -l3 --single-thread --metric-group "+Ports_Utilization" -I 80 -x, -o x.csv ./bench 400
+	#toplev.py -l3 --no-multiplex --single-thread --metric-group "+Ports_Utilization" -I 80 -x, -o x.csv ./blox
+	#toplev.py -l5 --no-multiplex --single-thread --nodes "+ILP,+0_Ports_Utilized,+1_Port_Utilized,+2_Ports_Utilized,+3m_Ports_Utilized,-Frontend_Bound,-Frontend_Bandwidth,-Frontend_Latency,-Machine_Clears,-Branch_Resteers,-Branch_Mispredicts,-L1_Bound" -x, -o x.csv ./bench $(TEST)
+	$(BARPLOT) -o out.pdf x.csv
+	evince out.pdf
 
 runningprofile:
 	export ARMORPID=`pgrep nbody`
