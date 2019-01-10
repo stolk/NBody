@@ -94,11 +94,11 @@ bool ctrl_draw_create( void )
 	CHECK_OGL
 
 	const char* attribs_font = "position";
-	const char* attribs_star = "position,displacement";
+	const char* attribs_star = "position,opacity,hue,displacement";
 	const char* attribs_main = "position";
 
 	const char* uniforms_font = "rotx,roty,translation,colour";
-	const char* uniforms_star = "rotx,roty,translation,colour,invaspect,splatscale";
+	const char* uniforms_star = "rotx,roty,translation,invaspect,splatscale,gain";
 	const char* uniforms_main = "rotx,roty,translation,colour,invaspect";
 
 	bool ok;
@@ -130,9 +130,11 @@ bool ctrl_draw_create( void )
 		static int translationUniform = glpr_uniform("translation");
 		static int rotxUniform = glpr_uniform("rotx");
 		static int rotyUniform = glpr_uniform("roty");
+		static int colourUniform = glpr_uniform("colour");
 		glUniform2f( translationUniform, 0, 0 );
 		glUniform2f( rotxUniform, 1, 0 );
 		glUniform2f( rotyUniform, 0, 1 );
+		glUniform4f( colourUniform, 1,1,0,1 );
 		CHECK_OGL
 	}
 
@@ -141,13 +143,13 @@ bool ctrl_draw_create( void )
 		static int translationUniform = glpr_uniform("translation");
 		static int rotxUniform = glpr_uniform("rotx");
 		static int rotyUniform = glpr_uniform("roty");
-		static int colourUniform = glpr_uniform("colour");
 		static int invaspectUniform = glpr_uniform("invaspect");
+		static int gainUniform = glpr_uniform("gain");
 		glUniform2f( translationUniform, 0, 0 );
 		glUniform2f( rotxUniform, 0.042, 0.0 );
 		glUniform2f( rotyUniform, 0.0, 0.042 );
-		glUniform4f( colourUniform, 1,1,0,1 );
 		glUniform1f( invaspectUniform, 1.0 );
+		glUniform1f( gainUniform, 0.5f );
 		CHECK_OGL
 	}
 

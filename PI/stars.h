@@ -34,6 +34,7 @@ typedef struct
 	float vx[ CELLCAP ];	//! velocities, x component.
 	float vy[ CELLCAP ];	//! velocities, y component.
 	int   st[ CELLCAP ];	//! status bits for each star.
+	float age[ CELLCAP ];	//! how old is each star.
 	float xrng[2];		//! cell's low and high x.
 	float yrng[2];		//! cell's low and high y;
 	int cnt;		//! number of stars in this cell.

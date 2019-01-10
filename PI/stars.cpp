@@ -65,8 +65,13 @@ static float circle_scl = 0.02f;
 
 typedef struct
 {
-	float circle[ circle_sz ][ 3 ][ 2 ];
-	float displacements[ NUMSTARS ][ 2 ];
+	float displacements[ 2 ];
+	float hue;
+} perinstance_t;
+typedef struct
+{
+	float circle[ circle_sz ][ 3 ][ 3 ];		// x, y, opacity
+	perinstance_t perinstance[ NUMSTARS ];
 } vdata_t;
 
 static vdata_t vdata;	//!< Vertex data for the VBO.
@@ -156,7 +161,7 @@ void remove_from_cell( int idx, int cx, int cy )
 }
 
 
-static int add_to_cell( int cx, int cy, float px, float py, float vx, float vy, int uid )
+static int add_to_cell( int cx, int cy, float px, float py, float vx, float vy, int uid, float age )
 {
 	cell_t& cell = cells[ cx ][ cy ];
 	const float EPS = 10e-6;
@@ -181,18 +186,19 @@ static int add_to_cell( int cx, int cy, float px, float py, float vx, float vy, 
 	cell.vx[ i ] = vx;
 	cell.vy[ i ] = vy;
 	cell.st[ i ] = 0 | ( uid << 8 );
+	cell.age[ i ] = age;
 	return i;
 }
 
 
-static int add_star( float px, float py, float vx, float vy, int uid )
+static int add_star( float px, float py, float vx, float vy, int uid, float age )
 {
 	const int cx = POS2CELL(px);
 	const int cy = POS2CELL(py);
 	if ( cx < 0 || cx >= GRIDRES ) return -1;
 	if ( cy < 0 || cy >= GRIDRES ) return -1;
 	ASSERTM( cx >= 0 && cx < GRIDRES && cy >= 0 && cy < GRIDRES, "Cell coordinate %d,%d is out of grid bounds for star position %f,%f", cx, cy, px, py );
-	return add_to_cell( cx, cy, px, py, vx, vy, uid );
+	return add_to_cell( cx, cy, px, py, vx, vy, uid, age );
 }
 
 
@@ -232,7 +238,8 @@ void stars_spawn( int num, float centrex, float centrey, float velx, float vely,
 		(
 			starx, stary,	// position.
 			vx, vy,		// velocity.
-			-1		// new star: create unique id for it.
+			-1,		// new star: create unique id for it.
+			0.0f		// new star: age is 0.
 		);
 	}
 }
@@ -249,9 +256,9 @@ void stars_set_splat_radius( float splatrad )
 		const float x1 = splatrad * cosf( a1 );
 		const float y1 = splatrad * sinf( a1 );
 		float* writer = vdata.circle[i][0];
-		*writer++ =  0; *writer++ =  0;
-		*writer++ = x0; *writer++ = y0;
-		*writer++ = x1; *writer++ = y1;
+		*writer++ =  0; *writer++ =  0; *writer++ = 1.00f;
+		*writer++ = x0; *writer++ = y0; *writer++ = 0.12f;
+		*writer++ = x1; *writer++ = y1; *writer++ = 0.12f;
 	}
 }
 
@@ -844,6 +851,16 @@ void stars_update( float dt )
 		}
 	TT_END( "p/q swap" );
 
+	// Age the stars.
+	for ( int cx=0; cx<GRIDRES; ++cx )
+		for ( int cy=0; cy<GRIDRES; ++cy )
+		{
+			cell_t& cell = cells[ cx ][ cy ];
+			const int cnt = cell.cnt;
+			for ( int i=0; i<cnt; ++i )
+				cell.age[i] += dt;
+		}
+
 	TT_BEGIN( "transits" );
 
 	const int MAXTRANSITS = NUMSTARS/20;
@@ -852,6 +869,7 @@ void stars_update( float dt )
 	float vx[ MAXTRANSITS ];
 	float vy[ MAXTRANSITS ];
 	int   st[ MAXTRANSITS ];
+	float age[ MAXTRANSITS ];
 	int numtransits = 0;
 
 	// Remove stars that went out of cell bounds.
@@ -871,6 +889,7 @@ void stars_update( float dt )
 					vx[j] = cell.vx[i];
 					vy[j] = cell.vy[i];
 					st[j] = cell.st[i];
+					age[j]= cell.age[i];
 					remove_from_cell( i, cx, cy );
 				}
 			}
@@ -880,7 +899,7 @@ void stars_update( float dt )
 	//LOGI( "Num transits: %d", numtransits );
 	for ( int i=0; i<numtransits; ++i )
 	{
-		add_star( px[i], py[i], vx[i], vy[i], st[i]>>8 );
+		add_star( px[i], py[i], vx[i], vy[i], st[i]>>8, age[i] );
 	}
 	TT_END( "transits" );
 
@@ -1000,12 +1019,12 @@ void stars_draw_grid( void )
 
 void stars_draw_field( void )
 {
-	static int colourUniform = glpr_uniform( "colour" );
+	static int gainUniform = glpr_uniform( "gain" );
 	static int splatscaleUniform = glpr_uniform( "splatscale" );
 
 	glUniform1f( splatscaleUniform, 12 * circle_scl / cam_scl );
 	float v = 0.002f * cam_scl / (circle_scl*circle_scl);
-	glUniform4f( colourUniform, v,v,v,v );
+	glUniform1f( gainUniform, v );
 
 	int totalv = 0;
 	for ( int cx=0; cx<GRIDRES; ++cx )
@@ -1031,8 +1050,9 @@ void stars_draw_field( void )
 			cell_t& cell = cells[ cx ][ cy ];
 			for ( int i=0; i<cell.cnt && writer < NUMSTARS; ++i )
 			{
-				vdata.displacements[ writer ][ 0 ] = cell.px[ i ];
-				vdata.displacements[ writer ][ 1 ] = cell.py[ i ];
+				vdata.perinstance[ writer ].displacements[ 0 ] = cell.px[ i ];
+				vdata.perinstance[ writer ].displacements[ 1 ] = cell.py[ i ];
+				vdata.perinstance[ writer ].hue = LO_CLAMPED( 0.64f - 0.01f * cell.age[ i ], 0.0f );
 				writer += 1;
 			}
 		}
@@ -1040,7 +1060,7 @@ void stars_draw_field( void )
 	ASSERT( writer == totalv );
 
 	GLuint vbooff = (GLuint) ( sizeof( vdata.circle ) );
-	GLuint vbosz  = (GLuint) ( vbooff + totalv * 2 * sizeof( float ) );
+	GLuint vbosz  = (GLuint) ( vbooff + totalv * sizeof(perinstance_t) );
 
 	GLuint vbo=0;
 	GLuint vao=0;
@@ -1050,14 +1070,29 @@ void stars_draw_field( void )
 	glBindBuffer( GL_ARRAY_BUFFER, vbo );
 	glBufferData( GL_ARRAY_BUFFER, vbosz, (void*) &vdata, GL_STREAM_DRAW );
 	CHECK_OGL
-	glVertexAttribPointer( ATTRIB_VERTEX, 2, GL_FLOAT, 0, 2 * sizeof(float), (void*) 0 );
+	const size_t stride = 3 * sizeof(float);
+	glVertexAttribPointer( ATTRIB_VERTEX, 2, GL_FLOAT, 0, stride, (void*) 0 );
 	CHECK_OGL
+	glVertexAttribPointer( ATTRIB_OPACIT, 1, GL_FLOAT, 0, stride, (void*) (size_t) (2*sizeof(float)) );
+	CHECK_OGL
+
 	glVertexAttribDivisor( ATTRIB_DISPLACEMENT, 1 );
-	glVertexAttribPointer( ATTRIB_DISPLACEMENT, 2, GL_FLOAT, 0, 2 * sizeof(float), (void*) (size_t) vbooff );
+	glVertexAttribDivisor( ATTRIB_HUE, 1 );
+
+	const size_t instancestride = sizeof( perinstance_t );
+
+	glVertexAttribPointer( ATTRIB_DISPLACEMENT, 2, GL_FLOAT, 0, instancestride, (void*) (size_t) (vbooff+0) );
 	CHECK_OGL
+	glVertexAttribPointer( ATTRIB_HUE, 1, GL_FLOAT, 0, instancestride, (void*) (size_t) (vbooff+2*sizeof(float)) );
+	CHECK_OGL
+
 	glEnableVertexAttribArray( ATTRIB_VERTEX );
 	CHECK_OGL
+	glEnableVertexAttribArray( ATTRIB_OPACIT );
+	CHECK_OGL
 	glEnableVertexAttribArray( ATTRIB_DISPLACEMENT );
+	CHECK_OGL
+	glEnableVertexAttribArray( ATTRIB_HUE );
 	CHECK_OGL
 
 	//glDrawArrays( GL_POINTS, 0, totalv );
