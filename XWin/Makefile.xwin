@@ -70,6 +70,7 @@ PIOBJS=\
   $(PIPREFIX)/ctrl.o \
   $(PIPREFIX)/ctrl_draw.o \
   $(PIPREFIX)/stars.o \
+  $(PIPREFIX)/help.o \
   $(PIPREFIX)/cam.o \
   $(PIPREFIX)/debugdraw.o \
   $(PIPREFIX)/sdlthreadpooltask.o \
@@ -86,7 +87,6 @@ LIBS=\
   -L$(HOME)/lib \
   $(HOME)/lib/libSDL2.a \
   /usr/lib/x86_64-linux-gnu/libalut.a \
-  -lopenal \
   -lpthread \
   -lGL \
   -ldl \
