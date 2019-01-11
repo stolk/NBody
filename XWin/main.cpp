@@ -18,7 +18,7 @@
 
 //#include "sengine.h"
 
-#include "icon64pixels.h"
+#include "icon128pixels.h"
 
 #if defined( USESTEAM )
 #	include "steam/steam_api.h"
@@ -469,7 +469,7 @@ static bool make_window( bool use_aa )
 
 	window = SDL_CreateWindow
 	(
-		"Fragger",
+		"Sprinkle, Sprinkle, Little Star.",
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
 		fbw, fbh,
@@ -489,12 +489,10 @@ static bool make_window( bool use_aa )
 int main( int argc, char* argv[] )
 {
 	int vsync=0;
-	int autolaunch=-1;
 	for ( int i=1; i<argc; ++i )
 	{
 		if ( !strncmp( argv[ i ], "fs=", 3 ) ) ctrl_fullScreen=atoi(argv[i]+3);
 		if ( !strncmp( argv[ i ], "vsync=", 6 ) ) vsync = atoi(argv[i]+6);
-		if ( !strncmp( argv[ i ], "autolaunch=", 11 ) ) autolaunch = atoi(argv[i]+11);
 		if ( !strncmp( argv[ i ], "w=", 2 ) ) fbw = atoi(argv[i]+2);
 		if ( !strncmp( argv[ i ], "h=", 2 ) ) fbh = atoi(argv[i]+2);
 	}
@@ -517,6 +515,9 @@ int main( int argc, char* argv[] )
 
 	asserthook = present_assert;
 
+	fprintf( stderr, "Sprinkle, Sprinkle, Little Star. v1.0\n" );
+	fprintf( stderr, "(c) Game Studio Abraham Stolk Inc.\n" );
+
 	const int numjoy = SDL_NumJoysticks();
 	LOGI("Number of joysticks: %d", numjoy);
 	const int mappings_added = SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
@@ -534,7 +535,7 @@ int main( int argc, char* argv[] )
 	}
 
 	// Hook in the application icon.
-	SDL_Surface* surface = SDL_CreateRGBSurfaceFrom( (void*) icon64pixels, 64, 64, 32, 64 * 4, 0x00ff0000, 0x0000ff00, 0x0000ff, 0x00000000 );
+	SDL_Surface* surface = SDL_CreateRGBSurfaceFrom( (void*) icon128pixels, 128, 128, 32, 128 * 4, 0x00ff0000, 0x0000ff00, 0x0000ff, 0xff000000 );
 	if (surface)
 	{
 		SDL_SetWindowIcon( window, surface );
@@ -642,13 +643,6 @@ int main( int argc, char* argv[] )
 
 	if ( controller )
 		LOGI( "Using controller %s", SDL_GameControllerName( controller ) );
-
-	if ( autolaunch > -1 )
-	{
-		char m[80];
-		snprintf( m, sizeof(m), "startgame levelnr=%d", autolaunch );
-		nfy_msg( m );
-	}
 
 	while ( !should_quit )
 	{
