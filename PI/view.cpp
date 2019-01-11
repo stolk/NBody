@@ -99,6 +99,9 @@ void view_setup( int backingWidth, int backingHeight, bool smallFormat )
 	int retiy = ( 3 * mainh ) / 4 - retiw / 2;
 	rects[ VIEWRETI ] = rectMake( retix, retiy, retiw, retiw );
 
+	int helpx = 0; // ( mainw - mainh ) / 2;
+	rects[ VIEWHELP ] = rectMake( helpx, 0, mainh, mainh );
+
 	view_gamepadActive = false;
 }
 
@@ -644,6 +647,8 @@ void view_setKeyStatus( int keysym, bool down, bool repeat )
 			nfy_msg( "brush radius=4" );
 		if ( keysym == '5' && down )
 			nfy_msg( "brush radius=5" );
+		if ( keysym == 0x4000003A && down )	// F1
+			nfy_msg( "show toggle_help=1" );
 		if ( keysym == 0x4000003B && down )	// F2
 			nfy_msg( "spawndemo nr=0" );
 	}

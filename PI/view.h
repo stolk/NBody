@@ -19,6 +19,7 @@ enum
 
 	VIEWMAIN,	// main
 	VIEWRETI,	// reticule
+	VIEWHELP,	// help screen
 
 	VIEWRMAP,	// key remapping (desktop version only.)
 

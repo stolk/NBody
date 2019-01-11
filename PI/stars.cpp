@@ -7,6 +7,7 @@
 #include "vmath.h"
 #include "rendercontext.h"
 #include "glpr.h"
+#include "approximation.h"
 
 // PI
 #include "cam.h"
@@ -25,6 +26,8 @@ extern "C"
 
 #include <float.h>
 #include <immintrin.h>
+
+#define MAXSTARS		60000
 
 #define MAXCONTRIBS		500
 
@@ -71,7 +74,7 @@ typedef struct
 typedef struct
 {
 	float circle[ circle_sz ][ 3 ][ 3 ];		// x, y, opacity
-	perinstance_t perinstance[ NUMSTARS ];
+	perinstance_t perinstance[ MAXSTARS ];
 } vdata_t;
 
 static vdata_t vdata;	//!< Vertex data for the VBO.
@@ -291,28 +294,6 @@ void stars_create( void )
 		LOGI( "center cell has x range %f,%f", cell.xrng[0], cell.xrng[1] );
 		LOGI( "px 0.0 falls in cx %d", POS2CELL(0.0f) );
 	}
-
-#if 0
-	const int num = NUMSTARS/5;
-	const float off = GRIDRES/5.0f;
-	const float rad = GRIDRES/9.0f;
-	stars_spawn( num, -off, -off/4,  0.01f,  0.14f, rad, true );
-	stars_spawn( num,  off,  off/4, -0.01f, -0.14f, rad, true );
-#endif
-#if 0
-	stars_spawn( NUMSTARS/4, 0,0,  0,0,  GRIDRES/2.3, true );
-#endif
-
-	float maxcnt=0;
-	for ( int cx=0; cx<GRIDRES; ++cx )
-		for ( int cy=0; cy<GRIDRES; ++cy )
-		{
-			cell_t& cell = cells[ cx ][ cy ];
-			if ( maxcnt < cell.cnt )
-				maxcnt = cell.cnt;
-		}
-	LOGI( "Created %d stars in %d cells, with max cell load at %f", NUMSTARS, GRIDRES*GRIDRES, maxcnt / (float) CELLCAP );
-
 
 	for ( int lvl=1; lvl<=NUMDIMS; ++lvl )
 	{
@@ -863,7 +844,7 @@ void stars_update( float dt )
 
 	TT_BEGIN( "transits" );
 
-	const int MAXTRANSITS = NUMSTARS/20;
+	const int MAXTRANSITS = MAXSTARS/20;
 	float px[ MAXTRANSITS ];
 	float py[ MAXTRANSITS ];
 	float vx[ MAXTRANSITS ];
@@ -1037,10 +1018,10 @@ void stars_draw_field( void )
 	if ( !totalv )
 		return;
 
-	if ( totalv > NUMSTARS )
+	if ( totalv > MAXSTARS )
 	{
-		LOGE( "Exceeded maximum(%d) nr of stars: %d", NUMSTARS, totalv );
-		totalv = NUMSTARS;
+		LOGE( "Exceeded maximum(%d) nr of stars: %d", MAXSTARS, totalv );
+		totalv = MAXSTARS;
 	}
 
 	int writer = 0;
@@ -1048,11 +1029,12 @@ void stars_draw_field( void )
 		for ( int cy=0; cy<GRIDRES; ++cy )
 		{
 			cell_t& cell = cells[ cx ][ cy ];
-			for ( int i=0; i<cell.cnt && writer < NUMSTARS; ++i )
+			for ( int i=0; i<cell.cnt && writer < MAXSTARS; ++i )
 			{
 				vdata.perinstance[ writer ].displacements[ 0 ] = cell.px[ i ];
 				vdata.perinstance[ writer ].displacements[ 1 ] = cell.py[ i ];
-				vdata.perinstance[ writer ].hue = LO_CLAMPED( 0.64f - 0.01f * cell.age[ i ], 0.0f );
+				//vdata.perinstance[ writer ].hue = LO_CLAMPED( 0.64f - 0.01f * cell.age[ i ], 0.0f );
+				vdata.perinstance[ writer ].hue = LO_CLAMPED( 0.64f - 0.10f * logf_approximation( cell.age[i] ), 0.0f );
 				writer += 1;
 			}
 		}

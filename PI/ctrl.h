@@ -51,6 +51,7 @@ extern bool ctrl_buyRequested;
 extern bool ctrl_leaderboardRequested;
 extern bool ctrl_achievementRequested;
 extern bool ctrl_signinoutRequested;
+extern bool ctrl_paused;
 
 
 // internal

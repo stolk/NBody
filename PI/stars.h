@@ -1,4 +1,3 @@
-#define NUMSTARS	30000	//! Total number of stars.
 #define	GRIDRES		64	//! Grid resolution.
 #define CELLCAP		2700	//! Max stars per cell.
 

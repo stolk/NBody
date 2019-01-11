@@ -22,6 +22,7 @@ extern "C"
 #include "sticksignal.h"
 #include "num_steps.h"
 #include "debugdraw.h"
+#include "help.h"
 
 #if defined( USEGLDEBUGPROC )
 #	include "gldebugproc.inl"
@@ -48,6 +49,9 @@ static bool supportsDebugOutput=false;
 static float low_pass_fps = 60.0f;
 
 static rendercontext_t renderContext;
+
+bool ctrl_paused = false;
+
 
 #define USEVIEW( V ) \
 	{ \
@@ -225,9 +229,8 @@ void ctrl_simulate( void )
 	sticksignal_update( dt, numsteps );
 
 	for (  int i=0; i<numsteps; ++i )
-	{
-		stars_update( dt );
-	}
+		if ( !ctrl_paused )
+			stars_update( dt );
 }
 
 
@@ -287,13 +290,19 @@ const char* ctrl_drawFrame( void )
 	glpr_use( fontProgram );
 
 	static int font_colourUniform = glpr_uniform( "colour" );
+	glUniform4f( font_colourUniform, 0.6f, 0.3f, 0.02f, 1.0f );
+	glDisable( GL_BLEND );
+
+	if ( view_enabled[ VIEWHELP ] )
+	{
+		USEVIEW( VIEWHELP );
+		help_draw();
+	}
 
 	// Draw FPS
-
 	USEVIEW( VIEWMAIN );
 	char str[32];
 	snprintf( str, sizeof(str), "%03d", (int) roundf( low_pass_fps ) );
-	glUniform4f( font_colourUniform, 0.6f, 0.3f, 0.02f, 1.0f );
 	glDisable( GL_DEPTH_TEST );
 	text_draw_string( str, vec3_t(1,-1,0), vec3_t(0.023, 0.04, 0.0 ), "right", "bottom", -1 );
 	snprintf( str, sizeof(str), "%d", stars_total_count() );

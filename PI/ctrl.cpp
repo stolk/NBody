@@ -55,37 +55,13 @@ float csf=1.0f; // no retina display scale for android.
 float invaspect=1.0f;
 
 
-static void setMenuActivation( bool a )
-{
-	view_enabled[ VIEWLVLS ] = a;
-	view_enabled[ VIEWMAIN ] = !a;
-	view_enabled[ VIEWBBAC ] = !a;
-	view_enabled[ VIEWPAUS ] = !a;
-
-#if defined( PLAY ) // On Amazon app store, we don't do google play services.
-	view_enabled[ VIEWBGPL ] = a;
-#endif
-	
-#if defined( PLAY ) || defined( OSX ) || defined( IPHN )
-	view_enabled[ VIEWBLEA ] = a && ctrl_signedin;
-	view_enabled[ VIEWBACH ] = a && ctrl_signedin;
-#endif
-
-	//view_enabled[ VIEWBBUY ] = a && menu_buyEnabled;
-
-	view_enabled[ VIEWSETT ] = false;
-}
-
-
 static void onStartgame( const char* cmd )
 {
-	setMenuActivation( false );
 }
 
 
 static void onMenu( const char* cmd )
 {
-	setMenuActivation( true );
 }
 
 
@@ -225,8 +201,10 @@ static void onShow( const char* m )
 {
 	const int toggle_grid = nfy_int( m, "toggle_grid" );
 	const int toggle_aggr = nfy_int( m, "toggle_aggr" );
+	const int toggle_help = nfy_int( m, "toggle_help" );
 	if ( toggle_grid > 0 ) stars_show_grid = !stars_show_grid;
 	if ( toggle_aggr > 0 ) stars_show_aggr = !stars_show_aggr;
+	if ( toggle_help > 0 ) view_enabled[ VIEWHELP ] = ! view_enabled[ VIEWHELP ];
 }
 
 
@@ -247,7 +225,7 @@ static void onSpawndemo( const char* m )
 	if ( nr == 0)
 	{
 		stars_add_blackhole = true;
-		stars_spawn( NUMSTARS/1, 0,0,  0,0,  GRIDRES/2.3, true );
+		stars_spawn( 30000, 0,0,  0,0,  GRIDRES/2.3, true );
 	}
 }
 
@@ -257,6 +235,14 @@ static void onSplatradius( const char* m )
 	const float delta = nfy_flt( m, "delta" );
 	if ( delta > -FLT_MAX )
 		stars_change_splat_radius( delta );
+}
+
+
+static void onPause( const char* m )
+{
+	const int toggle = nfy_int( m, "toggle" );
+	if ( toggle > 0 )
+		ctrl_paused = !ctrl_paused;
 }
 
 
@@ -295,6 +281,7 @@ static void ctrl_init( void )
 	nfy_obs_add( "blackhole", onBlackhole );
 	nfy_obs_add( "spawndemo", onSpawndemo );
 	nfy_obs_add( "splatradius", onSplatradius );
+	nfy_obs_add( "pause", onPause );
 
 	kv_init( ctrl_configPath );
 
@@ -377,7 +364,8 @@ bool ctrl_create( int w, int h, float sf, const char* format )
 
 	//vbodb_load();
 
-	setMenuActivation( false );
+	view_enabled[ VIEWMAIN ] = true;
+	view_enabled[ VIEWHELP ] = true;
 
 	stars_create();
 
@@ -404,13 +392,13 @@ bool ctrl_onBack( void )
 		nfy_msg( "settings show=0" );
 		return true;
 	}
+	if ( view_enabled[ VIEWHELP ] )
+	{
+		nfy_msg( "show toggle_help=1" );
+		return true;
+	}
 
-	if ( view_enabled[ VIEWLVLS ] )
-		return false;
-
-	// handle the back key by closing the game view.
-	setMenuActivation( true );
-	return true;
+	return false;
 }
 
 
