@@ -70,7 +70,7 @@ static int	tracked_head = 0;
 static int	tracked_tail = 0;
 
 static const int circle_sz = 12;
-static float circle_scl = 0.02f;
+static float circle_scl = 0.03f;
 
 typedef struct
 {
@@ -211,7 +211,7 @@ static int add_star( float px, float py, float vx, float vy, int uid, float age 
 }
 
 
-void stars_spawn( int num, float centrex, float centrey, float velx, float vely, float radius, bool addrot )
+void stars_spawn( int num, float centrex, float centrey, float velx, float vely, float radius, bool addrot, bool presetage )
 {
 	static int idx=0;
 	int numstars = stars_total_count();
@@ -242,13 +242,13 @@ void stars_spawn( int num, float centrex, float centrey, float velx, float vely,
 
 		const float vx = velx - stary * speedscale;
 		const float vy = vely + starx * speedscale;
-
+		const float age = presetage ? radius*dsqr : 0.0f;
 		add_star
 		(
 			starx, stary,	// position.
 			vx, vy,		// velocity.
 			-1,		// new star: create unique id for it.
-			0.0f		// new star: age is 0.
+			age		// new star: age is 0.
 		);
 	}
 }
@@ -346,7 +346,7 @@ void stars_sprinkle( int cnt, float x, float y, float rad, bool addrot )
 {
 	const float vx = 0;
 	const float vy = 0;
-	stars_spawn( cnt, x, y, vx, vy, rad, addrot );
+	stars_spawn( cnt, x, y, vx, vy, rad, addrot, false );
 }
 
 
@@ -1040,7 +1040,8 @@ void stars_draw_field( void )
 				vdata.perinstance[ writer ].displacements[ 0 ] = cell.px[ i ];
 				vdata.perinstance[ writer ].displacements[ 1 ] = cell.py[ i ];
 				//vdata.perinstance[ writer ].hue = LO_CLAMPED( 0.64f - 0.01f * cell.age[ i ], 0.0f );
-				vdata.perinstance[ writer ].hue = LO_CLAMPED( 0.64f - 0.10f * logf_approximation( cell.age[i] ), 0.0f );
+				const float t = sin_approximation( HI_CLAMPED( 0.05f * cell.age[i], M_PI_2 ) );
+				vdata.perinstance[writer].hue = 0.65f * (1 - t);
 				writer += 1;
 			}
 		}

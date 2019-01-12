@@ -113,7 +113,7 @@ extern void stars_exit( void );
 extern void stars_create( void );
 
 //! Add stars to the world.
-extern void stars_spawn( int num, float centrex, float centrey, float velx, float vely, float radius, bool addrot );
+extern void stars_spawn( int num, float centrex, float centrey, float velx, float vely, float radius, bool addrot, bool presetage );
 
 //! Clear all the stars from the field.
 extern void stars_clear( void );

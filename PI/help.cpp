@@ -8,12 +8,11 @@
 const char* keys[NUML][2] =
 {
 	"F1",		"Toggle Help.",
-	"F2",		"Spawn Demo.",
 	"L-Drag",	"Spawn Stars.",
 	"R-Drag",	"Move Camera.",
 	"Scroll",	"Zoom in/out.",
-	"ALT+Drag",	"Spawn Orbitting Stars.",
 	"B",		"Toggle Black Hole.",
+	"ALT+Drag",	"Spawn Orbitting Stars.",
 	"L-Click",	"Select Star.",
 	"P",		"Show Aggregates.",
 	"~",		"Toggle Grid.",
@@ -21,6 +20,7 @@ const char* keys[NUML][2] =
 	"PgDn",		"Decrease Particle Size.",
 	"1..5",		"Set Brush Size.",
 	"C",		"Clear Stars.",
+	"F2",		"Spawn Demo.",
 };
 
 
