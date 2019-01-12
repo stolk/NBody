@@ -1,5 +1,7 @@
 #include "sdlthreadpool.h"
-#include "threadtracer.h"
+#if defined(linux)
+#	include "threadtracer.h"
+#endif
 #include <assert.h>
 
 #ifndef REF
@@ -15,7 +17,9 @@ int threadpool_worker(void *tp)
 	//The task to be executed
 	task_t *task=0;
 
+#if defined(linux)
 	tt_signin( -1, "worker" );
+#endif
 
 	for( ; ; ) {
 		//Aquire lock

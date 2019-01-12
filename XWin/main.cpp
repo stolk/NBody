@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <limits.h>
+#include <stdlib.h>
 
 #if defined(linux)
 #	include <fenv.h>
@@ -639,6 +640,10 @@ int main( int argc, char* argv[] )
 		{
 			LOGI( "Can use late vsync swap." );
 		}
+	}
+	else
+	{
+		SDL_GL_SetSwapInterval( 0 );
 	}
 
 	if ( controller )

@@ -10,9 +10,6 @@
 #include "approximation.h"
 
 // PI
-#include "cam.h"
-#include "debugdraw.h"
-
 extern "C"
 {
 #if defined( ANDROID )
@@ -21,8 +18,17 @@ extern "C"
 #	include "sdlthreadpool.h"
 #endif
 }
+#include "cam.h"
+#include "debugdraw.h"
 
-#include "threadtracer.h"
+
+#if defined(linux)
+#	include "threadtracer.h"
+#else
+#	define TT_SCOPE
+#	define TT_BEGIN(A)
+#	define TT_END(A)
+#endif
 
 #include <float.h>
 #include <immintrin.h>
@@ -748,9 +754,9 @@ void cell_update( int cx, int cy, float dt )
 		sumx8 = _mm256_hadd_ps( sumx8, sumx8 );
 		sumy8 = _mm256_hadd_ps( sumy8, sumy8 );
 		const __m128 lox4 = _mm256_extractf128_ps( sumx8, 0x00 );
-		const __m128 hix4 = _mm256_extractf128_ps( sumx8, 0xff );
+		const __m128 hix4 = _mm256_extractf128_ps( sumx8, 0x01 );
 		const __m128 loy4 = _mm256_extractf128_ps( sumy8, 0x00 );
-		const __m128 hiy4 = _mm256_extractf128_ps( sumy8, 0xff );
+		const __m128 hiy4 = _mm256_extractf128_ps( sumy8, 0x01 );
 		ax += _mm_cvtss_f32( _mm_add_ps( lox4, hix4 ) );	// finally use the scalar float for x.
 		ay += _mm_cvtss_f32( _mm_add_ps( loy4, hiy4 ) );	// finally use the scalar float for y.
 #else

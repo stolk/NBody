@@ -6,12 +6,6 @@
 #include "vmath.h"
 #include "kv.h"
 
-// PI
-#include "keymap.h"
-#if 0
-#include "keymapdlg.h"
-#endif
-
 #include <assert.h>
 #include <stdio.h>
 #include <math.h>
@@ -572,69 +566,11 @@ void view_setKeyStatus( int keysym, bool down, bool repeat )
 	// See if we need to control the tank.
 	if ( view_enabled[ VIEWMAIN ] )
 	{
-		if ( keysym == KEY_FIRE && down && !repeat ) snprintf( m, sizeof(m), "fire gamepad=0 keyboard=1" );
 		if ( keysym == 13 && down ) nfy_msg( "singlestep" );
 	}
 
-	if ( view_enabled[ VIEWSETT ] )
+if ( view_enabled[ VIEWMAIN ] )
 	{
-		if ( keysym == KEY_LEFT  && down ) { nfy_msg( "settings dx=-1" ); }
-		if ( keysym == KEY_RIGHT && down ) { nfy_msg( "settings dx=1" ); }
-		if ( keysym == KEY_FW    && down ) { nfy_msg( "settings dy=-1" ); }
-		if ( keysym == KEY_BW    && down ) { nfy_msg( "settings dy=1" ); }
-		switch( keysym )
-		{
-			case 32:		// space
-			case 13:		// return
-			case 0x40000058:	// kp enter
-				if ( down )
-					nfy_msg( "settings selected=1" );
-				break;
-		}
-	}
-	else if ( view_enabled[ VIEWRESU ] )
-	{
-		if ( keysym == KEY_FW    && down ) { nfy_msg( "resumedlg dy=-1" ); }
-		if ( keysym == KEY_BW    && down ) { nfy_msg( "resumedlg dy=1" ); }
-		if ( down )
-			switch( keysym )
-			{
-				case 32:
-				case 13:
-				case 0x40000058:	// kp enter
-					snprintf( m, sizeof(m), "resumedlg close=1" );
-					nfy_msg( m );
-					nfy_queue_msg( "levelsel start=1 confirmed=1 up=0" );
-					break;
-			}
-	}
-	else if ( view_enabled[ VIEWLVLS ] )
-	{
-		if ( keysym == KEY_LEFT  && down ) { nfy_msg( "levelsel dx=-1" ); }
-		if ( keysym == KEY_RIGHT && down ) { nfy_msg( "levelsel dx=1" ); }
-		if ( keysym == KEY_FW    && down ) { nfy_msg( "levelsel dy=-1" ); }
-		if ( keysym == KEY_BW    && down ) { nfy_msg( "levelsel dy=1" ); }
-		switch( keysym )
-		{
-			case 32:		// space
-			case 13:		// return
-			case 0x40000058:	// kp enter
-				snprintf( m, sizeof(m), "levelsel start=1 up=%d", !down );
-				break;
-		}
-	}
-	else if ( view_enabled[ VIEWMAIN ] )
-	{
-		static int le=0, ri=0, up=0, dn=0;
-		bool change=0;
-		if ( keysym == KEY_LEFT  ) { le=down; change=true; }
-		if ( keysym == KEY_RIGHT ) { ri=down; change=true; }
-		if ( keysym == KEY_FW    ) { up=down; change=true; }
-		if ( keysym == KEY_BW    ) { dn=down; change=true; }
-		if ( change )
-		{
-			return;
-		}
 		if ( keysym == 'c' && down )
 			nfy_msg( "clearfield" );
 		if ( keysym == '1' && down )

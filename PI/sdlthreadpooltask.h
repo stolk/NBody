@@ -14,7 +14,7 @@
 //===============================================
 typedef enum {
 	NO_DELETE,
-	DELETE
+	DO_DELETE
 } memory_t;
 
 

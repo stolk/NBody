@@ -22,17 +22,18 @@ extern "C"
 
 // From PI
 #include "view.h"
-#include "keymap.h"
 #include "stars.h"
 #include "cam.h"
 #include "debugdraw.h"
 
-#include "threadtracer.h"
+#if defined(linux)
+#	include "threadtracer.h"
+#endif
 
 
 const char* ctrl_filesPath = ".";
 const char* ctrl_configPath = ".";
-int ctrl_fullScreen = 0;
+int ctrl_fullScreen = 1;
 
 int surfaceW = 0;
 int surfaceH = 0;
@@ -106,30 +107,6 @@ static void onSettings( const char* cmd )
 	{
 		view_enabled[ VIEWSETT ] = show;
 		view_enabled[ VIEWLVLS ] = !show;
-	}
-}
-
-
-static void onKeymapdlg( const char* m )
-{
-	const int show = nfy_int( m, "show" );
-	if ( show >= 0 )
-	{
-		//keymapdlg_reset();
-		view_enabled[ VIEWRMAP ] = show;
-		view_enabled[ VIEWSETT ] = !show;
-	}
-	if ( show == 0 )
-	{
-		const int numstored = keymap_store( ctrl_configPath );
-		if (!numstored)
-		{
-			LOGE( "Failed to store keymapping." );
-		}
-		else
-		{
-			LOGI( "Stored %d keymappings", numstored );
-		}
 	}
 }
 
@@ -270,7 +247,6 @@ static void ctrl_init( void )
 	nfy_obs_add( "buy", onBuy );
 	nfy_obs_add( "outcome", onOutcome );
 	nfy_obs_add( "settings", onSettings );
-	nfy_obs_add( "keymapdlg", onKeymapdlg );
 	nfy_obs_add( "aspect", onAspect );
 	nfy_obs_add( "sprinkle", onSprinkle );
 	nfy_obs_add( "select", onSelect );
@@ -324,7 +300,9 @@ static void ctrl_init( void )
 	CHECK_OGL
 	//wld_init();
 
+#if defined(linux)
 	tt_signin( -1, "mainthread" );
+#endif
 
 	stars_init();
 
@@ -418,7 +396,9 @@ void ctrl_destroy( void )
 void ctrl_exit( void )
 {
 	stars_exit();
+#if defined(linux)
 	tt_report( "threadtracer.json" );
+#endif
 }
 
 

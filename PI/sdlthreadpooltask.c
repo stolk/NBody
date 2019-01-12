@@ -73,7 +73,7 @@ int task_exec(task_t *task)
 	task->work(&(task->argument));
 
 	//Free argument memory
-	if(task->argument.del_arg == DELETE)
+	if(task->argument.del_arg == DO_DELETE)
 		free(task->argument.arg);
 
 	//Change the status
@@ -85,7 +85,7 @@ int task_exec(task_t *task)
 void task_free(task_t *task)
 {
 	//If not executed, free the argument memory
-	if(task->status == NOT_EXECUTED && task->argument.del_arg == DELETE) {
+	if(task->status == NOT_EXECUTED && task->argument.del_arg == DO_DELETE) {
 		free(task->argument.arg);
 	}
 
