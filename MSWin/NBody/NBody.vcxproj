@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{CA84331C-CB71-44DB-AF28-199876EEA1D0}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>NBody</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>../../../../src/dutch-blunt/src;../../PI;../../../GBase/src/;../libs/SDL/include;../../../../src/gl3w/include;../../../../src/stb;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>../libs/SDL/lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>../../../../src/dutch-blunt/src;../../PI;../../../GBase/src/;../libs/SDL/include;../../../../src/gl3w/include;../../../../src/stb;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>../libs/SDL/lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>APPVER=1.00;LOGTAG=nbody;_USE_MATH_DEFINES;MSWIN;USECOREPROFILE;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2Main.lib;opengl32.lib;version.lib;imm32.lib;Ws2_32.lib;winmm.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>APPVER=1.00;LOGTAG=nbody;_USE_MATH_DEFINES;MSWIN;USECOREPROFILE;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2Main.lib;opengl32.lib;version.lib;imm32.lib;Ws2_32.lib;winmm.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\src\dutch-blunt\src\dblunt.h" />
+    <ClInclude Include="..\..\..\..\src\dutch-blunt\src\vdata.h" />
+    <ClInclude Include="..\..\..\GBase\src\baseconfig.h" />
+    <ClInclude Include="..\..\..\GBase\src\checkogl.h" />
+    <ClInclude Include="..\..\..\GBase\src\dbd.h" />
+    <ClInclude Include="..\..\..\GBase\src\elapsed.h" />
+    <ClInclude Include="..\..\..\GBase\src\glpr.h" />
+    <ClInclude Include="..\..\..\GBase\src\kv.h" />
+    <ClInclude Include="..\..\..\GBase\src\logx.h" />
+    <ClInclude Include="..\..\..\GBase\src\nfy.h" />
+    <ClInclude Include="..\..\..\GBase\src\num_steps.h" />
+    <ClInclude Include="..\..\..\GBase\src\pidc.h" />
+    <ClInclude Include="..\..\..\GBase\src\pseudorand.h" />
+    <ClInclude Include="..\..\..\GBase\src\quad.h" />
+    <ClInclude Include="..\..\..\GBase\src\rendercontext.h" />
+    <ClInclude Include="..\..\..\GBase\src\serialize.h" />
+    <ClInclude Include="..\..\..\GBase\src\sticksignal.h" />
+    <ClInclude Include="..\..\..\GBase\src\txdb.h" />
+    <ClInclude Include="..\..\..\GBase\src\vmath.h" />
+    <ClInclude Include="..\..\PI\cam.h" />
+    <ClInclude Include="..\..\PI\ctrl.h" />
+    <ClInclude Include="..\..\PI\debugdraw.h" />
+    <ClInclude Include="..\..\PI\help.h" />
+    <ClInclude Include="..\..\PI\sdlthreadpool.h" />
+    <ClInclude Include="..\..\PI\sdlthreadpooltask.h" />
+    <ClInclude Include="..\..\PI\shadersources_glsl_150.h" />
+    <ClInclude Include="..\..\PI\stars.h" />
+    <ClInclude Include="..\..\PI\text.h" />
+    <ClInclude Include="..\..\PI\view.h" />
+    <ClInclude Include="..\..\XWin\icon128pixels.h" />
+    <ClInclude Include="NBody.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\src\dutch-blunt\src\dblunt.c" />
+    <ClCompile Include="..\..\..\..\src\gl3w\src\gl3w.c" />
+    <ClCompile Include="..\..\..\GBase\src\assertreport_mswin.c" />
+    <ClCompile Include="..\..\..\GBase\src\elapsed.c" />
+    <ClCompile Include="..\..\..\GBase\src\glpr.cpp" />
+    <ClCompile Include="..\..\..\GBase\src\kv.cpp" />
+    <ClCompile Include="..\..\..\GBase\src\logx.c" />
+    <ClCompile Include="..\..\..\GBase\src\nfy.cpp" />
+    <ClCompile Include="..\..\..\GBase\src\pidc.cpp" />
+    <ClCompile Include="..\..\..\GBase\src\pseudorand.c" />
+    <ClCompile Include="..\..\..\GBase\src\quad.cpp" />
+    <ClCompile Include="..\..\..\GBase\src\sticksignal.cpp" />
+    <ClCompile Include="..\..\..\GBase\src\txdb_stb.cpp" />
+    <ClCompile Include="..\..\PI\cam.cpp" />
+    <ClCompile Include="..\..\PI\ctrl.cpp" />
+    <ClCompile Include="..\..\PI\ctrl_draw.cpp" />
+    <ClCompile Include="..\..\PI\debugdraw.cpp" />
+    <ClCompile Include="..\..\PI\help.cpp" />
+    <ClCompile Include="..\..\PI\sdlthreadpool.c" />
+    <ClCompile Include="..\..\PI\sdlthreadpooltask.c" />
+    <ClCompile Include="..\..\PI\stars.cpp" />
+    <ClCompile Include="..\..\PI\text.cpp" />
+    <ClCompile Include="..\..\PI\view.cpp" />
+    <ClCompile Include="..\..\XWin\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="NBody.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="NBody.ico" />
+    <Image Include="small.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\GBase\src\gldebugproc.inl" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

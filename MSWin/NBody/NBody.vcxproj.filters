@@ -1,0 +1,225 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="gl3w">
+      <UniqueIdentifier>{fca41048-c168-4580-a758-f83cf9a68994}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GBase">
+      <UniqueIdentifier>{eb38b823-3612-4bea-b5ba-6665bff964ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PI">
+      <UniqueIdentifier>{92e3dcfd-47ac-4c45-86b2-9083699a9d88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dblunt">
+      <UniqueIdentifier>{5c5f418d-82dc-4e13-91f6-cd0bb1dc5a8b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NBody.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\baseconfig.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\checkogl.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\elapsed.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\glpr.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\kv.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\logx.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\nfy.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\pidc.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\pseudorand.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\quad.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\rendercontext.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\serialize.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\sticksignal.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\vmath.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\txdb.h">
+      <Filter>GBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\dutch-blunt\src\dblunt.h">
+      <Filter>dblunt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\dutch-blunt\src\vdata.h">
+      <Filter>dblunt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\dbd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\GBase\src\num_steps.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\XWin\icon128pixels.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PI\cam.h">
+      <Filter>PI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PI\ctrl.h">
+      <Filter>PI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PI\debugdraw.h">
+      <Filter>PI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PI\help.h">
+      <Filter>PI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PI\sdlthreadpool.h">
+      <Filter>PI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PI\sdlthreadpooltask.h">
+      <Filter>PI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PI\shadersources_glsl_150.h">
+      <Filter>PI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PI\stars.h">
+      <Filter>PI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PI\text.h">
+      <Filter>PI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PI\view.h">
+      <Filter>PI</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\src\gl3w\src\gl3w.c">
+      <Filter>gl3w</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GBase\src\elapsed.c">
+      <Filter>GBase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GBase\src\glpr.cpp">
+      <Filter>GBase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GBase\src\kv.cpp">
+      <Filter>GBase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GBase\src\logx.c">
+      <Filter>GBase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GBase\src\nfy.cpp">
+      <Filter>GBase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GBase\src\pidc.cpp">
+      <Filter>GBase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GBase\src\pseudorand.c">
+      <Filter>GBase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GBase\src\quad.cpp">
+      <Filter>GBase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GBase\src\sticksignal.cpp">
+      <Filter>GBase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GBase\src\txdb_stb.cpp">
+      <Filter>GBase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\dutch-blunt\src\dblunt.c">
+      <Filter>dblunt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\GBase\src\assertreport_mswin.c">
+      <Filter>GBase</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\XWin\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\PI\cam.cpp">
+      <Filter>PI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\PI\ctrl.cpp">
+      <Filter>PI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\PI\ctrl_draw.cpp">
+      <Filter>PI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\PI\debugdraw.cpp">
+      <Filter>PI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\PI\help.cpp">
+      <Filter>PI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\PI\sdlthreadpool.c">
+      <Filter>PI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\PI\sdlthreadpooltask.c">
+      <Filter>PI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\PI\stars.cpp">
+      <Filter>PI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\PI\text.cpp">
+      <Filter>PI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\PI\view.cpp">
+      <Filter>PI</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="NBody.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="NBody.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="small.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\GBase\src\gldebugproc.inl">
+      <Filter>GBase</Filter>
+    </None>
+  </ItemGroup>
+</Project>
