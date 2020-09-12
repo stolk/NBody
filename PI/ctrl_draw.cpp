@@ -31,6 +31,7 @@ extern "C"
 //From  PI
 #include "text.h"
 #include "stars.h"
+#include "space.h"
 #include "cam.h"
 
 #if defined( USEES3 )
@@ -107,16 +108,16 @@ bool ctrl_draw_create( void )
 
 	bool ok;
 
-	ok = glpr_load( "Font",  fontProgram, source_vsh_Font, source_fsh_Font, attribs_font, uniforms_font );
-	ASSERT(ok);
+	fontProgram = glpr_load( "Font", source_vsh_Font, source_fsh_Font, attribs_font, uniforms_font );
+	ASSERT(fontProgram);
 	CHECK_OGL
 
-	ok = glpr_load( "Star",  starProgram, source_vsh_Star, source_fsh_Star, attribs_star, uniforms_star );
-	ASSERT(ok);
+	starProgram = glpr_load( "Star", source_vsh_Star, source_fsh_Star, attribs_star, uniforms_star );
+	ASSERT(starProgram);
 	CHECK_OGL
 
-	ok = glpr_load( "Main",  mainProgram, source_vsh_Main, source_fsh_Main, attribs_main, uniforms_main );
-	ASSERT(ok);
+	mainProgram = glpr_load( "Main", source_vsh_Main, source_fsh_Main, attribs_main, uniforms_main );
+	ASSERT(mainProgram);
 	CHECK_OGL
 
 	LOGI( "Font program loaded as %d", fontProgram );
@@ -264,6 +265,7 @@ const char* ctrl_drawFrame( void )
 			glUniform2f( rotyUniform, 0, cam_scl );
 			glUniform2f( translationUniform, -cam_scl * cam_pos[0], -cam_scl * cam_pos[1] );
 			stars_draw_grid();
+			//space_draw_grid();
 		}
 
 		{
