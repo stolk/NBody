@@ -31,7 +31,7 @@ extern "C"
 //From  PI
 #include "text.h"
 #include "stars.h"
-#include "space.h"
+//#include "space.h"
 #include "cam.h"
 
 #if defined( USEES3 )
@@ -105,8 +105,6 @@ bool ctrl_draw_create( void )
 	const char* uniforms_font = "rotx,roty,translation,colour";
 	const char* uniforms_star = "rotx,roty,translation,invaspect,splatscale,gain";
 	const char* uniforms_main = "rotx,roty,translation,colour,invaspect";
-
-	bool ok;
 
 	fontProgram = glpr_load( "Font", source_vsh_Font, source_fsh_Font, attribs_font, uniforms_font );
 	ASSERT(fontProgram);

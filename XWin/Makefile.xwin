@@ -1,5 +1,5 @@
-CXX=clang++
-CC=clang
+CXX=clang++-10
+CC=clang-10
 PERF=$(HOME)/src/pmu-tools/ocperf.py
 
 
@@ -31,8 +31,9 @@ CFLAGS=\
   -I$(BASEPREFIX) \
   -I$(PIPREFIX) \
   -I$(TTPREFIX) \
-  `$(HOME)/bin/sdl2-config --cflags` \
+  `sdl2-config --cflags` \
   -g -Wall -Wshadow -Wno-conversion -Wno-missing-braces -Wno-old-style-cast -Wno-unknown-pragmas \
+  -ffp-exception-behavior=maytrap \
   -MMD -MP \
   $(OPTIM)
 
@@ -85,8 +86,7 @@ DBLUNTOBJS=\
 LIBS=\
   -L. \
   -L$(HOME)/lib \
-  $(HOME)/lib/libSDL2.a \
-  /usr/lib/x86_64-linux-gnu/libalut.a \
+  `sdl2-config --static-libs` \
   -lpthread \
   -lGL \
   -ldl \

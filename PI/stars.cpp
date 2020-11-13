@@ -33,13 +33,13 @@ extern "C"
 #include <float.h>
 #include <immintrin.h>
 
-#define MAXSTARS		60000
+#define MAXSTARS		120000
 
 #define MAXCONTRIBS		500
 
 #define VECTORIZE		1
 
-#define NUMCONCURRENTTASKS	4
+#define NUMCONCURRENTTASKS	16
 
 #define ENCODECONTRIB( LEVEL, X, Y ) \
 	( ( X << 0 ) | ( Y << 8 ) | ( LEVEL << 16 ) )
