@@ -1,3 +1,7 @@
+#pragma clang fp contract(on)
+
+typedef float floatx16 __attribute__((vector_size(4*16)));
+
 #include "stars.h"
 
 // From GBase
@@ -37,7 +41,7 @@ extern "C"
 
 #define MAXCONTRIBS		500
 
-#define VECTORIZE		1
+#define VECTORIZE		16	// set to 0 for scalar, 8 for AVX2, 16 for AVX512.
 
 #define NUMCONCURRENTTASKS	16
 
@@ -45,11 +49,11 @@ extern "C"
 	( ( X << 0 ) | ( Y << 8 ) | ( LEVEL << 16 ) )
 
 #if defined( MSWIN )
-#       define ALIGNEDPRE __declspec(align(32))
+#       define ALIGNEDPRE __declspec(align(64))
 #       define ALIGNEDPST
 #else
 #       define ALIGNEDPRE
-#       define ALIGNEDPST __attribute__ ((aligned (32)))
+#       define ALIGNEDPST __attribute__ ((aligned (64)))
 #endif
 
 
@@ -645,7 +649,7 @@ void cell_update( int cx, int cy, float dt )
 	ALIGNEDPRE float src_y  [ MAXSOURCES ] ALIGNEDPST;
 	ALIGNEDPRE float src_scl[ MAXSOURCES ] ALIGNEDPST;
 
-	TT_BEGIN( "gather contribs" );
+	//TT_BEGIN( "gather contribs" );
 	// Find all the sources that generate gravity for this cell (individual stars, and aggregates.)
 	const contribinfo_t& contrib = contribs[ cx ][ cy ];
 	int reader = 0;
@@ -694,7 +698,7 @@ void cell_update( int cx, int cy, float dt )
 	}
 	ASSERT( numsrc <= MAXSOURCES );
 
-#if VECTORIZE
+#if VECTORIZE > 0
 	// Make it an even nr of batches.
 	while ( numsrc & 0xf )
 	{
@@ -703,13 +707,13 @@ void cell_update( int cx, int cy, float dt )
 		src_scl[ numsrc ] = 0;
 		numsrc++;
 	}
-	const int numbatches = numsrc/8;
+	const int numbatches = numsrc / VECTORIZE;
 #endif
-	TT_END( "gather contribs" );
+	//TT_END( "gather contribs" );
 
 	// Traverse the stars in this cell, and sum all forces on it.
 
-	TT_BEGIN( "Compute forces" );
+	//TT_BEGIN( "Compute forces" );
 
 	for ( int i=0; i<cnt; ++i )
 	{
@@ -719,7 +723,7 @@ void cell_update( int cx, int cy, float dt )
 		const float curx = cell.px[i];
 		const float cury = cell.py[i];
 
-#if VECTORIZE
+#if VECTORIZE == 8	// AVX2
 		const __m256 curx8 = _mm256_set1_ps( curx );
 		const __m256 cury8 = _mm256_set1_ps( cury );
 		const __m256 G8    = _mm256_set1_ps( G );
@@ -759,7 +763,30 @@ void cell_update( int cx, int cy, float dt )
 		const __m128 hiy4 = _mm256_extractf128_ps( sumy8, 0x01 );
 		ax += _mm_cvtss_f32( _mm_add_ps( lox4, hix4 ) );	// finally use the scalar float for x.
 		ay += _mm_cvtss_f32( _mm_add_ps( loy4, hiy4 ) );	// finally use the scalar float for y.
-#else
+#elif VECTORIZE == 16	// AVX512
+		const floatx16 curx16 = _mm512_set1_ps( curx );
+		const floatx16 cury16 = _mm512_set1_ps( cury );
+		const floatx16 G16    = _mm512_set1_ps( G    );
+		floatx16 forcex16     = _mm512_set1_ps( 0.0f );	// all batches accumulate in these.
+		floatx16 forcey16     = _mm512_set1_ps( 0.0f );
+		for ( int batch=0; batch<numbatches; ++batch )
+		{
+			const floatx16 x16    = _mm512_load_ps( src_x   + 16*batch );
+			const floatx16 y16    = _mm512_load_ps( src_y   + 16*batch );
+			const floatx16 scl16  = _mm512_load_ps( src_scl + 16*batch );
+			const floatx16 dx16   =  x16 - curx16;
+			const floatx16 dy16   =  y16 - cury16;
+			const floatx16 dsqr16 =  dx16*dx16 + dy16*dy16;
+			floatx16 idist16    = _mm512_rsqrt14_ps( dsqr16 );
+			idist16 = _mm512_min_ps( idist16, _mm512_set1_ps( 100.0f ) );
+			const floatx16 magn16 = ( scl16 * G16 ) * ( idist16 * idist16 * idist16 );
+			forcex16 += magn16 * dx16;
+			forcey16 += magn16 * dy16;
+		}
+		// Now we need to sum all 16 lanes in the force vector.
+		ax += _mm512_reduce_add_ps( forcex16 );
+		ay += _mm512_reduce_add_ps( forcey16 );
+#else	// SCALAR CODE
 		for ( int s=0; s<numsrc; ++s )
 		{
 			const float dx =  src_x[s] - curx;
@@ -786,7 +813,7 @@ void cell_update( int cx, int cy, float dt )
 		if ( cell.qy[i] < cell.yrng[0] ) ST_SET_CROSSED_LO_Y( cell.st[i] );
 		if ( cell.qy[i] > cell.yrng[1] ) ST_SET_CROSSED_HI_Y( cell.st[i] );
 	}
-	TT_END( "Compute forces" );
+	//TT_END( "Compute forces" );
 }
 
 

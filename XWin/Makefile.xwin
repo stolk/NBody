@@ -15,7 +15,8 @@ TOPLEV=$(TOPLEVPREFIX)/toplev.py
 BARPLOT=$(TOPLEVPREFIX)/tl-barplot.py
 
 #OPTIM=-DDEBUG -mavx2
-OPTIM=-O3 -mavx2
+#OPTIM=-O3 -mavx2
+OPTIM=-O3 -march=skylake-avx512
 #-fsanitize=float-divide-by-zero
 
 CFLAGS=\
