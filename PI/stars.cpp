@@ -41,8 +41,6 @@ extern "C"
 
 #define MAXCONTRIBS		500
 
-#define VECTORIZE		16	// set to 0 for scalar, 8 for AVX2, 16 for AVX512.
-
 #define NUMCONCURRENTTASKS	16
 
 #define ENCODECONTRIB( LEVEL, X, Y ) \

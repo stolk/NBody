@@ -1,25 +1,29 @@
-CXX=clang++-10
-CC=clang-10
+CXX=clang++-13
+CC=clang-13
 PERF=$(HOME)/src/pmu-tools/ocperf.py
 
 
 AR=ar
 PERF=$(HOME)/src/pmu-tools/ocperf.py
 
-BASEPREFIX=$(HOME)/apps/GBase/src
+BASEPREFIX=../GBase/src
 PIPREFIX=PI
 DBLUNTPREFIX=$(HOME)/src/dutch-blunt/src
 TTPREFIX=$(HOME)/src/ThreadTracer
 TOPLEVPREFIX=$(HOME)/src/pmu-tools
 TOPLEV=$(TOPLEVPREFIX)/toplev.py
 BARPLOT=$(TOPLEVPREFIX)/tl-barplot.py
+SDLPREFIX=/opt/SDL2
 
-#OPTIM=-DDEBUG -mavx2
-#OPTIM=-O3 -mavx2
-OPTIM=-O3 -march=skylake-avx512
-#-fsanitize=float-divide-by-zero
+OPTIM=-O3
+
+# Pick one of these for the CFLAGS:
+#
+# -DVECTORIZE=16 -march=skylake-avx512
+# -DVECTORIZE=8 -mavx2
 
 CFLAGS=\
+  -DVECTORIZE=8 -mavx2 \
   -DXWIN -DLANDSCAPE -DUSECOREPROFILE -Dlinux \
   -D_POSIX_C_SOURCE=199309L \
   -D_DEFAULT_SOURCE \
@@ -27,12 +31,11 @@ CFLAGS=\
   -DLOGTAG=nbody \
   -I$(HOME)/src/stb/ \
   -I$(HOME)/include \
-  -I$(STEAMPREFIX)/public \
   -I$(DBLUNTPREFIX) \
   -I$(BASEPREFIX) \
   -I$(PIPREFIX) \
   -I$(TTPREFIX) \
-  `sdl2-config --cflags` \
+  `$(SDLPREFIX)/bin/sdl2-config --cflags` \
   -g -Wall -Wshadow -Wno-conversion -Wno-missing-braces -Wno-old-style-cast -Wno-unknown-pragmas \
   -ffp-exception-behavior=maytrap \
   -MMD -MP \
@@ -87,7 +90,7 @@ DBLUNTOBJS=\
 LIBS=\
   -L. \
   -L$(HOME)/lib \
-  `sdl2-config --static-libs` \
+  `$(SDLPREFIX)/bin/sdl2-config --static-libs` \
   -lpthread \
   -lGL \
   -ldl \
