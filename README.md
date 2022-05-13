@@ -37,3 +37,9 @@ If you have AVX512, edit Makefile to use -DVECTORIZE=16 and proper -march flag.
 Get a pre-built binary at:
 https://bram.itch.io/sprinkle-sprinkle-little-star
 
+
+## License
+
+Apache License 2
+
+https://choosealicense.com/licenses/apache-2.0/
