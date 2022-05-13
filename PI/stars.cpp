@@ -698,7 +698,7 @@ void cell_update( int cx, int cy, float dt )
 	}
 	ASSERT( numsrc <= MAXSOURCES );
 
-#if VECTORIZE > 0
+#if VECTORIZE > 1
 	// Make it an even nr of batches.
 	while ( numsrc & 0xf )
 	{
