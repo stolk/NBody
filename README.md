@@ -20,6 +20,11 @@ https://github.com/stolk/dutch-blunt
 STB
 https://github.com/nothings/stb
 
+## Supported platforms
+
+Tested on Linux.
+
+Unmaintained VisualStudio project, which at one point worked. No guarantees. You are mostly on your own.
 
 ## Building
 
