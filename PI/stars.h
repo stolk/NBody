@@ -1,5 +1,4 @@
-//#define	GRIDRES		64	//! Grid resolution.
-#define	GRIDRES		16	//! Grid resolution.
+#define	GRIDRES		32	//! Grid resolution.
 #define CELLCAP		3900	//! Max stars per cell.
 
 #define ST_CROSSED_LO_X		(1<<0)
