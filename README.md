@@ -1,4 +1,4 @@
-# NBody
+# NBody (Sprinkle, Sprinkle, Little Star.)
 N-Body simulation, 2D.
 
 "Sprinkle, Sprinkle, Little Stars...."
@@ -25,4 +25,10 @@ https://github.com/nothings/stb
 
 Check Makefile for proper paths to deps.
 If you have AVX512, edit Makefile to use -DVECTORIZE=16 and proper -march flag.
+
+
+## Pre-built binaries
+
+Get a pre-built binary at:
+https://bram.itch.io/sprinkle-sprinkle-little-star
 
