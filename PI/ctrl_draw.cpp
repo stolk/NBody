@@ -15,7 +15,6 @@ extern "C"
 #include "checkogl.h"
 #include "glpr.h"
 #include "view.h"
-#include "quad.h"
 #include "nfy.h"
 #include "shdw.h"
 

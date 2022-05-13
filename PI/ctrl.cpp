@@ -16,8 +16,6 @@ extern "C"
 #include "nfy.h"
 #include "checkogl.h"
 #include "glpr.h"
-#include "txdb.h"
-#include "quad.h"
 #include "sticksignal.h"
 
 // From PI
@@ -261,44 +259,21 @@ static void ctrl_init( void )
 
 	kv_init( ctrl_configPath );
 
-#if defined( IPHN ) || defined( OSX )
-	txdb_path = ctrl_filesPath;
-	//wld_path = ctrl_filesPath;
-#elif defined( ANDROID )
-	txdb_path = "Art";
-	//wld_path = "";
-#else
-	static char tp[256];
-	snprintf( tp, sizeof(tp), "%s/Art", ctrl_filesPath );
-	txdb_path = tp;
-#endif
-	
 #if defined( ANDROID )
-	//sengine_path = "Sounds";
 	vbodb_path = "VBOs";
 #else
 	static char ep[256];
 	snprintf( ep, sizeof(ep), "%s/Sounds", ctrl_filesPath );
-	// sengine_path = ep;
 
 	static char vp[256];
 	snprintf( vp, sizeof(vp), "%s/VBOs", ctrl_filesPath );
-	//vbodb_path = vp;
 #endif
 
-	txdb_premultiply = true;
-	txdb_init();
-
 	view_init();
-	//menu_init();
-	//settings_init();
-	//sengine_init();
-	//resumedlg_init();
 	sticksignal_init();
 	cam_init();
 	debugdraw_init();
 	CHECK_OGL
-	//wld_init();
 
 #if defined(linux)
 	tt_signin( -1, "mainthread" );
@@ -333,14 +308,6 @@ bool ctrl_create( int w, int h, float sf, const char* format )
 	LOGI( "Setting up view for %dx%d @%fx", w, h, csf );
 	const bool smallformat = !strcmp( format, "phone" );
 	view_setup( w, h, smallformat );
-
-	quad_init();
-
-	//menu_load_resources();
-	//wld_load_resources();
-	//hud_load_resources();
-
-	//vbodb_load();
 
 	view_enabled[ VIEWMAIN ] = true;
 	view_enabled[ VIEWHELP ] = true;
@@ -382,13 +349,7 @@ bool ctrl_onBack( void )
 
 void ctrl_destroy( void )
 {
-	//if ( wld_levelnr >= 0 ) wld_destroy();
-
-	//vbodb_clear();
-	quad_exit();
-	txdb_clear();
 	CHECK_OGL
-
 	ctrl_draw_destroy();
 }
 

@@ -17,8 +17,8 @@ DBlunt font
 https://github.com/stolk/dutch-blunt
 
 
-STB
-https://github.com/nothings/stb
+SDL2
+https://libsdl.org
 
 ## Supported platforms
 

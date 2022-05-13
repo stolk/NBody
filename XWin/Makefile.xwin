@@ -29,7 +29,6 @@ CFLAGS=\
   -D_DEFAULT_SOURCE \
   -DAPPVER=1.00 \
   -DLOGTAG=nbody \
-  -I$(HOME)/src/stb/ \
   -I$(HOME)/include \
   -I$(DBLUNTPREFIX) \
   -I$(BASEPREFIX) \
@@ -63,10 +62,10 @@ BASEOBJS=\
   $(BASEPREFIX)/pidc.o \
   $(BASEPREFIX)/glpr.o \
   $(BASEPREFIX)/quad.o \
-  $(BASEPREFIX)/txdb_stb.o \
   $(BASEPREFIX)/pseudorand.o \
   $(BASEPREFIX)/wavdb.o \
   $(BASEPREFIX)/sticksignal.o \
+
 
 PIOBJS=\
   $(PIPREFIX)/keymap.o \
