@@ -4,6 +4,7 @@
 
 #if defined(linux)
 #	include <fenv.h>
+#	include <unistd.h>
 #endif
 
 #include "checkogl.h"
@@ -612,6 +613,7 @@ int main( int argc, char* argv[] )
 	// Hard stop on NaN.
 	LOGI( "Enabling FP exceptions." );
 	feenableexcept( FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW );
+	fprintf(stderr,"To examine cpu load: top -H -p %d\n", getpid());
 #endif
 
 	int w,h;
