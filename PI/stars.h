@@ -102,7 +102,6 @@ extern bool stars_show_aggr;
 //! Optionally add a black hole at the centre of the grid.
 extern bool stars_add_blackhole;
 
-
 //! Upon program launch.
 extern void stars_init( bool multithreaded = true );
 
@@ -144,4 +143,7 @@ extern void stars_draw_field( void );
 
 //! The size of the particles on screen.
 extern void stars_change_splat_radius( float d );
+
+//! Go to next hue mapping.
+extern void stars_next_hue_mapping(void);
 

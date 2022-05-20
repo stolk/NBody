@@ -41,7 +41,7 @@ extern "C"
 
 #define MAXCONTRIBS		500
 
-#define NUMCONCURRENTTASKS	16
+#define NUMCONCURRENTTASKS	8
 
 #define ENCODECONTRIB( LEVEL, X, Y ) \
 	( ( X << 0 ) | ( Y << 8 ) | ( LEVEL << 16 ) )
@@ -114,6 +114,8 @@ bool stars_show_grid = true;
 bool stars_show_aggr = false;
 
 bool stars_add_blackhole = false;
+
+static int stars_hue_mapping = 0;
 
 
 //! Called once per lifetime of the application.
@@ -969,6 +971,14 @@ void stars_update( float dt )
 }
 
 
+void stars_next_hue_mapping(void)
+{
+	stars_hue_mapping += 1;
+	if ( stars_hue_mapping >= 2)
+		stars_hue_mapping = 0;
+}
+
+
 void stars_draw_grid( void )
 {
 	if ( !stars_show_grid ) return;
@@ -1064,9 +1074,16 @@ void stars_draw_field( void )
 			{
 				vdata.perinstance[ writer ].displacements[ 0 ] = cell.px[ i ];
 				vdata.perinstance[ writer ].displacements[ 1 ] = cell.py[ i ];
-				//vdata.perinstance[ writer ].hue = LO_CLAMPED( 0.64f - 0.01f * cell.age[ i ], 0.0f );
-				const float t = sin_approximation( HI_CLAMPED( 0.05f * cell.age[i], M_PI_2 ) );
-				vdata.perinstance[writer].hue = 0.65f * (1 - t);
+				if (stars_hue_mapping==0)
+				{
+					const float t = CLAMPED( sqrtf(cell.vx[i]*cell.vx[i] + cell.vy[i]*cell.vy[i])*0.5f, 0, 1 );
+					vdata.perinstance[writer].hue = 0.65f * (1 - t);
+				}
+				else
+				{
+					const float t = sin_approximation( HI_CLAMPED( 0.05f * cell.age[i], M_PI_2 ) );
+					vdata.perinstance[writer].hue = 0.65f * (1 - t);
+				}
 				writer += 1;
 			}
 		}
