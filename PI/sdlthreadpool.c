@@ -89,7 +89,7 @@ threadpool_t *threadpool_create(int n_thread)
 		threadpool->threads[ i ] = SDL_CreateThread
 		(
 			threadpool_worker,
-			"threadpool_worker",
+			"poolworker",
 			(void*) threadpool
 		);
 #else
