@@ -193,6 +193,12 @@ static void onBlackhole( const char* m )
 }
 
 
+static void onHuemapping( const char* m )
+{
+	stars_next_hue_mapping();
+}
+
+
 static void onSpawndemo( const char* m )
 {
 	const int nr = nfy_int( m, "nr" );
@@ -253,6 +259,7 @@ static void ctrl_init( void )
 	nfy_obs_add( "brush", onBrush );
 	nfy_obs_add( "show", onShow );
 	nfy_obs_add( "blackhole", onBlackhole );
+	nfy_obs_add( "huemapping", onHuemapping );
 	nfy_obs_add( "spawndemo", onSpawndemo );
 	nfy_obs_add( "splatradius", onSplatradius );
 	nfy_obs_add( "pause", onPause );

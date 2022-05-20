@@ -41,7 +41,7 @@ extern "C"
 
 #define MAXCONTRIBS		500
 
-#define NUMCONCURRENTTASKS	8
+#define NUMCONCURRENTTASKS	16
 
 #define ENCODECONTRIB( LEVEL, X, Y ) \
 	( ( X << 0 ) | ( Y << 8 ) | ( LEVEL << 16 ) )

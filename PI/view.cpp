@@ -611,6 +611,9 @@ if ( view_enabled[ VIEWMAIN ] )
 		case 'b':
 			if ( down ) snprintf( m, sizeof(m), "blackhole toggle=1" );
 			break;
+		case 'h':
+			if ( down ) snprintf( m, sizeof(m), "huemapping delta=1" );
+			break;
 		case 0x4000004B:	// SDLK_PAGEUP
 			if ( down ) snprintf( m, sizeof(m), "splatradius delta=0.01" );
 			break;
