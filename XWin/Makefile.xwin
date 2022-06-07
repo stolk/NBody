@@ -27,6 +27,7 @@ CFLAGS=\
   -DXWIN -DLANDSCAPE -DUSECOREPROFILE -Dlinux \
   -D_POSIX_C_SOURCE=199309L \
   -D_DEFAULT_SOURCE \
+  -D_GNU_SOURCE \
   -DAPPVER=1.00 \
   -DLOGTAG=nbody \
   -I$(HOME)/include \
@@ -231,6 +232,25 @@ configforperf:
 	echo "performance" > /sys/devices/system/cpu/cpufreq/policy14/scaling_governor
 	echo "performance" > /sys/devices/system/cpu/cpufreq/policy15/scaling_governor
 
+LATENCY=100000
+configlatency:
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy0/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy1/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy1/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy2/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy3/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy4/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy5/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy6/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy7/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy8/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy9/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy10/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy11/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy12/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy13/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy14/cpuinfo_transition_latency
+	echo $(LATENCY) > /sys/devices/system/cpu/cpufreq/policy15/cpuinfo_transition_latency
 
 
 -include $(BASEOBJS:.o=.d)
