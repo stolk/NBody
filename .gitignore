@@ -53,3 +53,6 @@ dkms.conf
 
 ./Makefile
 
+threadtracer.json
+nbody
+
