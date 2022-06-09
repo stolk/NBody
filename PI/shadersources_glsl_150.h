@@ -7,7 +7,6 @@ static const char* source_vsh_Font =
 "uniform mediump vec2 roty;\n"
 "uniform mediump vec2 translation;\n"
 "uniform lowp vec4 colour;\n"
-"uniform mediump float fadedist;\n"
 "void main()\n"
 "{\n"
 "    gl_Position.x = dot( position, rotx ) + translation.x;\n"
@@ -15,8 +14,6 @@ static const char* source_vsh_Font =
 "    gl_Position.z = 1.0;\n"
 "    gl_Position.w = 1.0;\n"
 "    clr = colour;\n"
-"    if ( abs( gl_Position.x ) > fadedist || abs( gl_Position.y ) > fadedist )\n"
-"        clr = colour;\n"
 "}\n";
 
 
