@@ -18,14 +18,14 @@
 #include "ctrl.h"
 #include "view.h"
 
+#if defined(linux)
+#	include "threadtracer.h"
+#endif
+
+
 //#include "sengine.h"
 
 #include "icon128pixels.h"
-
-#if defined( USESTEAM )
-#	include "steam/steam_api.h"
-#	include "steamstats.h"
-#endif
 
 
 static SDL_Window* window=0;
@@ -128,12 +128,9 @@ static void draw_screen( void )
 	const char* returnCode = ctrl_drawFrame();
 	(void) returnCode;
 
-#if defined( USESTEAM )
-	// Give SteamAPI the opportunity to fire off some callbacks.
-	SteamAPI_RunCallbacks();
-#endif
-
+	TT_BEGIN( "SwapWindow" );
 	SDL_GL_SwapWindow( window );
+	TT_END  ( "SwapWindow" );
 }
 
 
@@ -562,52 +559,10 @@ int main( int argc, char* argv[] )
 	LOGI("Version of gl3w: %d", version);
 #endif
 
-#if defined( USESTEAM )
-	if (SteamAPI_RestartAppIfNecessary(954920))
-	{
-		LOGI("Attempting a restart via steam.");
-		exit(1);
-	}
-	bool steam_initialized = SteamAPI_Init();
-	LOGI("%s initialize steam.", steam_initialized ? "Did" : "Could not");
-	if (!steam_initialized || !SteamUser())
-	{
-		SDL_ShowSimpleMessageBox
-		(
-			SDL_MESSAGEBOX_ERROR,
-			"Missing Steam Client",
-			"You need to be running the Steam client to play this game.\n"
-			"The reason for this is that without Steam running, this game does not know where on your harddisk to save the game data.\n",
-			NULL
-		);
-		exit(101);
-	}
-	static char userfolder[256];
-	userfolder[0] = 0;
-	const bool gotfolder = SteamUser()->GetUserDataFolder(userfolder, sizeof(userfolder));
-	if (!gotfolder)
-	{
-		LOGE("Failed to get the user data folder from steam.");
-	}
-	else
-	{
-		LOGI("User data folder is '%s'", userfolder);
-		ctrl_configPath = userfolder;
-		char logfname[256];
-		snprintf(logfname, sizeof(logfname), "%s/fttlog.txt", ctrl_configPath);
-		logx_file = fopen(logfname, "w");
-		LOGI("%s log file at %s.", logx_file ? "Opened" : "Could not open", logfname);
-	}
-	// Manage the steam stats.
-	steamstats_init(false);
-	ctrl_filesPath = ".";
-	ctrl_configPath = userfolder;
-#else
 	ctrl_filesPath = ".";
 	ctrl_configPath = ".";
-#endif
 
-#if defined(linux)
+#if defined(xlinux)
 	// Sigh... libopenal1 divides by zero!
 	// Sigh again... Intel Graphics Performance Analyzer also does bad math!
 	// Hard stop on NaN.
@@ -664,11 +619,6 @@ int main( int argc, char* argv[] )
 	//sengine_destroy();
 
 	SDL_GL_DeleteContext( glContext );
-
-#if defined( USESTEAM )
-	LOGI( "Shutting down SteamAPI." );
-	SteamAPI_Shutdown();
-#endif
 
 	LOGI( "Shutting down SDL subsystems." );
 	SDL_QuitSubSystem( subsystems );
