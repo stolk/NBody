@@ -41,7 +41,7 @@ extern "C"
 
 #define MAXCONTRIBS		500
 
-#define NUMCONCURRENTTASKS	16
+#define NUMCONCURRENTTASKS	12
 
 #define ENCODECONTRIB( LEVEL, X, Y ) \
 	( ( X << 0 ) | ( Y << 8 ) | ( LEVEL << 16 ) )
@@ -220,7 +220,7 @@ void stars_spawn( int num, float centrex, float centrey, float velx, float vely,
 	static int idx=0;
 	int numstars = stars_total_count();
 	float totalmass = (numstars+num) + (stars_add_blackhole ? BLACKHOLEMASS : 0.0f);
-	const float magicfactor = totalmass / 58000.0f;
+	const float magicfactor = totalmass / 55000.0f;
 
 	for ( int i=0; i<num; ++i )
 	{
@@ -456,7 +456,7 @@ void aggregate_cells( void )
 
 int aggregate_level( int lvl )
 {
-	TT_SCOPE( "aggregate_level" );
+	//TT_SCOPE( "aggregate_level" );
 	ASSERT( lvl >= 2 && lvl <= NUMDIMS );
 	const aggregate_t* reader = aggregates[ lvl-1 ];
 	aggregate_t* writer = aggregates[ lvl ];
@@ -500,15 +500,16 @@ int aggregate_level( int lvl )
 static void make_aggregates( void )
 {
 	TT_SCOPE( "make_aggregates" );
-	for ( int i=1; i<=NUMDIMS; ++i )
-		if ( i==1 )
-			aggregate_cells();
-		else
+	aggregate_cells();
+
+	TT_BEGIN( "aggregate_levels" );
+		for ( int i=2; i<=NUMDIMS; ++i )
 		{
 			const int hi = aggregate_level( i );
 			(void) hi;
 			//LOGI( "Highest star count at level %d: %d", i, hi );
 		}
+	TT_END  ( "aggregate_levels" );
 }
 
 
@@ -640,7 +641,7 @@ static void cell_draw_aggregates( int cx, int cy )
 #define MAXSOURCES	( MAXCONTRIBS + 8 * CELLCAP )
 void cell_update( int cx, int cy, float dt )
 {
-	TT_SCOPE( "cell_update" );
+	//TT_SCOPE( "cell_update" );
 	cell_t& cell = cells[ cx ][ cy ];
 	const int cnt = cell.cnt;
 	if ( !cnt ) return;
