@@ -258,4 +258,6 @@ configlatency:
 -include $(DBLUNTOBJS:.o=.d)
 -include XWin/main.d
 
+run:	nbody
+	INTEL_DEBUG=do32 MESA_GLSL_CACHE_DISABLE=1 ./nbody fs=0
 
