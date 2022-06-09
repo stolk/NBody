@@ -27,6 +27,10 @@ extern "C"
 #	include "gldebugproc.inl"
 #endif
 
+#if defined(linux)
+#	include "threadtracer.h"
+#endif
+
 //From  PI
 #include "text.h"
 #include "stars.h"
@@ -52,6 +56,10 @@ static rendercontext_t renderContext;
 
 bool ctrl_paused = false;
 
+#define NUMQ 0
+#if NUMQ
+static GLuint queryID[2][NUMQ];
+#endif
 
 #define USEVIEW( V ) \
 	{ \
@@ -191,6 +199,12 @@ bool ctrl_draw_create( void )
 	glEnable(GL_FRAMEBUFFER_SRGB);
 #endif
 
+#if NUMQ
+	glGenQueries(NUMQ, queryID[0]);
+	glGenQueries(NUMQ, queryID[1]);
+	CHECK_OGL
+#endif
+
 	return true;
 }
 
@@ -234,6 +248,7 @@ void ctrl_simulate( void )
 
 const char* ctrl_drawFrame( void )
 {
+	TT_SCOPE( "ctrl_drawFrame" );
 	view_update( period );
 
 	glFrontFace( GL_CCW );
@@ -250,7 +265,15 @@ const char* ctrl_drawFrame( void )
 		glClearColor( 0.01,0.02,0.08, 1.0 );
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 		glEnable( GL_BLEND );
+#if NUMQ
 
+		static int queryCount=0;
+		const int bk = (queryCount++ & 1);
+		const int fr = bk ? 0 : 1;
+		glBeginQuery(GL_TIME_ELAPSED, queryID[bk][0]);
+#endif
+
+		PUSHGROUPMARKER("grid")
 		{
 			glpr_use( mainProgram );
 			static int invaspectUniform = glpr_uniform("invaspect");
@@ -264,7 +287,9 @@ const char* ctrl_drawFrame( void )
 			stars_draw_grid();
 			//space_draw_grid();
 		}
+		POPGROUPMARKER
 
+		PUSHGROUPMARKER("stars")
 		{
 			glpr_use( starProgram );
 			static int invaspectUniform = glpr_uniform("invaspect");
@@ -277,6 +302,7 @@ const char* ctrl_drawFrame( void )
 			glUniform2f( translationUniform, -cam_scl * cam_pos[0], -cam_scl * cam_pos[1] );
 			stars_draw_field();
 		}
+		POPGROUPMARKER
 
 		{
 			glpr_use( mainProgram );
@@ -284,8 +310,23 @@ const char* ctrl_drawFrame( void )
 			glUniform4f( colourUniform, 1,1,0,1 );
 			debugdraw_draw();
 		}
+
+#if NUMQ
+		glEndQuery(GL_TIME_ELAPSED);
+
+		if ( queryCount>1 )
+		{
+			GLuint64 elapsed=0;
+			glGetQueryObjectui64v( queryID[fr][0], GL_QUERY_RESULT, &elapsed);
+			if ( (queryCount&63) == 0 )
+			{
+				fprintf(stderr,"Elapsed: %d\n", (int)elapsed);
+			}
+		}
+#endif
 	}
 
+	PUSHGROUPMARKER("text")
 	glpr_use( fontProgram );
 
 	static int font_colourUniform = glpr_uniform( "colour" );
@@ -307,6 +348,7 @@ const char* ctrl_drawFrame( void )
 	snprintf( str, sizeof(str), "%d", stars_total_count() );
 	text_draw_string( str, vec3_t(-1,-1,0), vec3_t(0.024, 0.04, 0.0 ), "left", "bottom", -1 );
 	CHECK_OGL
+	POPGROUPMARKER
 	return 0;
 }
 
